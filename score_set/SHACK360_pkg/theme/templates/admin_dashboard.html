@@ -4,535 +4,769 @@
 
 {% block content %}
 <div x-data="adminDashboard()" x-init="init()" class="min-h-screen bg-gray-100">
-    <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 w-64 bg-gray-800 text-white transform transition-transform duration-200 ease-in-out z-30"
-           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
-        <div class="flex items-center justify-center h-16 bg-gray-900">
-            <span class="text-2xl font-bold text-cyan-400">JA</span>
-            <span class="ml-2 text-xl font-semibold">Admin</span>
-        </div>
-        <nav class="mt-8">
-            <a href="#" @click.prevent="currentPage = 'dashboard'" 
-               :class="currentPage === 'dashboard' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
-                Dashboard
-            </a>
-            <a href="#" @click.prevent="currentPage = 'competitions'"
-               :class="currentPage === 'competitions' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="trophy" class="w-5 h-5 mr-3"></i>
-                Competitions
-            </a>
-            <a href="#" @click.prevent="currentPage = 'judges'"
-               :class="currentPage === 'judges' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="clipboard-check" class="w-5 h-5 mr-3"></i>
-                Judges
-            </a>
-            <a href="#" @click.prevent="currentPage = 'teams'"
-               :class="currentPage === 'teams' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="users" class="w-5 h-5 mr-3"></i>
-                Teams
-            </a>
-            <a href="#" @click.prevent="currentPage = 'analytics'"
-               :class="currentPage === 'analytics' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3"></i>
-                Analytics
-            </a>
-            
-            <!-- Quiz System Section -->
-            <div class="px-6 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase">Quiz System</div>
-            <a href="{% url 'question_pool' %}" class="flex items-center px-6 py-3 text-gray-100 hover:bg-gray-700">
-                <i data-lucide="help-circle" class="w-5 h-5 mr-3"></i>
-                Question Pool
-            </a>
-            <a href="#" @click.prevent="currentPage = 'quiz_masters'"
-               :class="currentPage === 'quiz_masters' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="user-check" class="w-5 h-5 mr-3"></i>
-                Quiz Masters
-            </a>
-            <a href="#" @click.prevent="currentPage = 'contestants'"
-               :class="currentPage === 'contestants' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="graduation-cap" class="w-5 h-5 mr-3"></i>
-                Contestants
-            </a>
-            <a href="#" @click.prevent="currentPage = 'quiz_sessions'"
-               :class="currentPage === 'quiz_sessions' ? 'bg-ja' : 'hover:bg-gray-700'"
-               class="flex items-center px-6 py-3 text-gray-100">
-                <i data-lucide="gamepad-2" class="w-5 h-5 mr-3"></i>
-                Quiz Sessions
-            </a>
-            
-            <div class="px-6 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase">Views</div>
-            <a href="{% url 'results' %}" class="flex items-center px-6 py-3 text-gray-100 hover:bg-gray-700">
-                <i data-lucide="eye" class="w-5 h-5 mr-3"></i>
-                View Results
-            </a>
-            <a href="{% url 'quiz_results' %}" class="flex items-center px-6 py-3 text-gray-100 hover:bg-gray-700">
-                <i data-lucide="trophy" class="w-5 h-5 mr-3"></i>
-                Quiz Leaderboard
-            </a>
-        </nav>
-        <div class="absolute bottom-0 w-full p-4">
-            <a href="{% url 'logout' %}" class="flex items-center text-gray-400 hover:text-white">
-                <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
-                Logout
-            </a>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="md:ml-64">
-        <!-- Top Bar -->
-        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6">
-            <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-600">
-                <i data-lucide="menu" class="w-6 h-6"></i>
-            </button>
-            <h1 class="text-xl font-semibold text-gray-800" x-text="pageTitle"></h1>
-            <div class="flex items-center space-x-4">
-                <span class="text-gray-600">Welcome, {{ user.username }}</span>
+    
+    <!-- Portal Selection Screen -->
+    <template x-if="!activePortal">
+        <div class="min-h-screen flex flex-col items-center justify-center p-6">
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center mb-4">
+                    <span class="text-5xl font-bold text-ja">JA</span>
+                    <span class="ml-3 text-3xl font-semibold text-gray-700">Nigeria</span>
+                </div>
+                <h1 class="text-2xl font-semibold text-gray-800 mb-2">Admin Dashboard</h1>
+                <p class="text-gray-600">Select a portal to manage</p>
             </div>
-        </header>
-
-        <!-- Page Content -->
-        <main class="p-6">
-            <!-- Dashboard Page -->
-            <template x-if="currentPage === 'dashboard'">
-                <div>
-                    <!-- Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-ja-50 text-ja">
-                                    <i data-lucide="trophy" class="w-6 h-6"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm text-gray-500">Competitions</p>
-                                    <p class="text-2xl font-bold" x-text="stats.competitions_count || 0"></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-green-100 text-green-600">
-                                    <i data-lucide="clipboard-check" class="w-6 h-6"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm text-gray-500">Judges</p>
-                                    <p class="text-2xl font-bold" x-text="stats.judges_count || 0"></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-                                    <i data-lucide="users" class="w-6 h-6"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm text-gray-500">Teams Scored</p>
-                                    <p class="text-2xl font-bold" x-text="stats.teams_scored_count || 0"></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                                    <i data-lucide="star" class="w-6 h-6"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm text-gray-500">Avg Score</p>
-                                    <p class="text-2xl font-bold" x-text="analytics.average_score?.toFixed(1) || '0.0'"></p>
-                                </div>
-                            </div>
-                        </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl w-full">
+                <!-- Company Program Portal -->
+                <div @click="selectPortal('cp')" 
+                     class="bg-white rounded-2xl shadow-xl p-8 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl border-4 border-transparent hover:border-ja">
+                    <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-ja-50">
+                        <i data-lucide="building-2" class="w-10 h-10 text-ja"></i>
                     </div>
+                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-3">Company Program</h2>
+                    <p class="text-center text-gray-600 mb-6">Manage competitions, judges, teams, and scoring for the JA Company Program.</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <span class="px-3 py-1 bg-ja-50 text-ja text-sm rounded-full">Competitions</span>
+                        <span class="px-3 py-1 bg-ja-50 text-ja text-sm rounded-full">Judges</span>
+                        <span class="px-3 py-1 bg-ja-50 text-ja text-sm rounded-full">Teams</span>
+                        <span class="px-3 py-1 bg-ja-50 text-ja text-sm rounded-full">Scoring</span>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <span class="inline-flex items-center text-ja font-semibold">
+                            Enter CP Portal
+                            <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+                        </span>
+                    </div>
+                </div>
 
-                    <!-- Recent Activity -->
-                    <div class="bg-white rounded-xl shadow">
-                        <div class="px-6 py-4 border-b">
-                            <h2 class="text-lg font-semibold">Recent Activity</h2>
-                        </div>
-                        <div class="p-6">
-                            <div class="space-y-4">
-                                <template x-for="activity in recentActivity" :key="activity.time">
+                <!-- Quiz Program Portal -->
+                <div @click="selectPortal('qp')" 
+                     class="bg-white rounded-2xl shadow-xl p-8 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl border-4 border-transparent hover:border-purple-500">
+                    <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-purple-100">
+                        <i data-lucide="brain" class="w-10 h-10 text-purple-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-3">Quiz Program</h2>
+                    <p class="text-center text-gray-600 mb-6">Manage live quizzes, quiz masters, contestants, and AI proctoring system.</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <span class="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">Quiz Masters</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">Contestants</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">Questions</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">Live Sessions</span>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <span class="inline-flex items-center text-purple-600 font-semibold">
+                            Enter QP Portal
+                            <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <p class="text-gray-500 text-sm">Logged in as <span class="font-semibold">{{ user.username }}</span></p>
+                <a href="{% url 'logout' %}" class="text-red-500 hover:text-red-700 text-sm mt-2 inline-block">Logout</a>
+            </div>
+        </div>
+    </template>
+
+    <!-- Company Program (CP) Portal -->
+    <template x-if="activePortal === 'cp'">
+        <div class="flex">
+            <!-- CP Sidebar -->
+            <aside class="fixed inset-y-0 left-0 w-64 bg-gray-800 text-white transform transition-transform duration-200 ease-in-out z-30"
+                   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+                <div class="flex items-center justify-between h-16 bg-gray-900 px-4">
+                    <div class="flex items-center">
+                        <span class="text-2xl font-bold text-ja">CP</span>
+                        <span class="ml-2 text-lg font-semibold">Portal</span>
+                    </div>
+                    <button @click="activePortal = null" class="text-gray-400 hover:text-white" title="Back to Portal Selection">
+                        <i data-lucide="grid" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <nav class="mt-6">
+                    <a href="#" @click.prevent="currentPage = 'cp_dashboard'" 
+                       :class="currentPage === 'cp_dashboard' ? 'bg-ja' : 'hover:bg-gray-700'"
+                       class="flex items-center px-6 py-3 text-gray-100">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'competitions'"
+                       :class="currentPage === 'competitions' ? 'bg-ja' : 'hover:bg-gray-700'"
+                       class="flex items-center px-6 py-3 text-gray-100">
+                        <i data-lucide="trophy" class="w-5 h-5 mr-3"></i>
+                        Competitions
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'judges'"
+                       :class="currentPage === 'judges' ? 'bg-ja' : 'hover:bg-gray-700'"
+                       class="flex items-center px-6 py-3 text-gray-100">
+                        <i data-lucide="clipboard-check" class="w-5 h-5 mr-3"></i>
+                        Judges
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'teams'"
+                       :class="currentPage === 'teams' ? 'bg-ja' : 'hover:bg-gray-700'"
+                       class="flex items-center px-6 py-3 text-gray-100">
+                        <i data-lucide="users" class="w-5 h-5 mr-3"></i>
+                        Teams
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'cp_analytics'"
+                       :class="currentPage === 'cp_analytics' ? 'bg-ja' : 'hover:bg-gray-700'"
+                       class="flex items-center px-6 py-3 text-gray-100">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3"></i>
+                        Analytics
+                    </a>
+                    
+                    <div class="px-6 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase">Quick Links</div>
+                    <a href="{% url 'judge_login' %}" target="_blank" class="flex items-center px-6 py-3 text-gray-100 hover:bg-gray-700">
+                        <i data-lucide="external-link" class="w-5 h-5 mr-3"></i>
+                        Judge Portal
+                    </a>
+                    <a href="{% url 'results' %}" target="_blank" class="flex items-center px-6 py-3 text-gray-100 hover:bg-gray-700">
+                        <i data-lucide="eye" class="w-5 h-5 mr-3"></i>
+                        View Results
+                    </a>
+                </nav>
+                <div class="absolute bottom-0 w-full p-4">
+                    <a href="{% url 'logout' %}" class="flex items-center text-gray-400 hover:text-white">
+                        <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                        Logout
+                    </a>
+                </div>
+            </aside>
+
+            <!-- CP Main Content -->
+            <div class="flex-1 md:ml-64">
+                <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6">
+                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-600">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <span class="px-2 py-1 bg-ja-50 text-ja text-xs font-semibold rounded mr-3">CP</span>
+                        <h1 class="text-xl font-semibold text-gray-800" x-text="cpPageTitle"></h1>
+                    </div>
+                    <span class="text-gray-600">{{ user.username }}</span>
+                </header>
+
+                <main class="p-6">
+                    <!-- CP Dashboard -->
+                    <template x-if="currentPage === 'cp_dashboard'">
+                        <div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div class="bg-white rounded-xl shadow p-6">
                                     <div class="flex items-center">
-                                        <div :class="activity.type === 'score' ? 'bg-green-100 text-green-600' : 'bg-ja-50 text-ja'"
-                                             class="p-2 rounded-full">
-                                            <i :data-lucide="activity.type === 'score' ? 'star' : 'plus'" class="w-4 h-4"></i>
+                                        <div class="p-3 rounded-full bg-ja-50 text-ja">
+                                            <i data-lucide="trophy" class="w-6 h-6"></i>
                                         </div>
                                         <div class="ml-4">
-                                            <p class="text-sm font-medium" x-text="activity.action"></p>
-                                            <p class="text-sm text-gray-500" x-text="activity.details"></p>
+                                            <p class="text-sm text-gray-500">Competitions</p>
+                                            <p class="text-2xl font-bold" x-text="stats.competitions_count || 0"></p>
                                         </div>
-                                        <div class="ml-auto text-xs text-gray-400" x-text="new Date(activity.time).toLocaleString()"></div>
                                     </div>
-                                </template>
-                                <p x-show="recentActivity.length === 0" class="text-gray-500 text-center py-4">No recent activity</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Competitions Page -->
-            <template x-if="currentPage === 'competitions'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Manage Competitions</h2>
-                        <button @click="showModal = 'competition'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Add Competition
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teams</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="comp in competitions" :key="comp.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="comp.name"></td>
-                                        <td class="px-6 py-4" x-text="comp.date"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="{
-                                                'bg-green-100 text-green-800': comp.status === 'active',
-                                                'bg-yellow-100 text-yellow-800': comp.status === 'scheduled',
-                                                'bg-gray-100 text-gray-800': comp.status === 'draft',
-                                                'bg-ja-50 text-blue-800': comp.status === 'completed'
-                                            }" class="px-2 py-1 rounded-full text-xs font-medium" x-text="comp.status"></span>
-                                        </td>
-                                        <td class="px-6 py-4" x-text="comp.teams_count"></td>
-                                        <td class="px-6 py-4">
-                                            <button @click="editCompetition(comp)" class="text-ja hover:text-blue-800 mr-2">
-                                                <i data-lucide="edit" class="w-4 h-4"></i>
-                                            </button>
-                                            <button @click="deleteCompetition(comp.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="competitions.length === 0">
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                        No competitions yet. Click "Add Competition" to create one.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Judges Page -->
-            <template x-if="currentPage === 'judges'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Manage Judges</h2>
-                        <button @click="showModal = 'judge'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Add Judge
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIN</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scores</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="judge in judges" :key="judge.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="judge.name"></td>
-                                        <td class="px-6 py-4 font-mono bg-gray-50" x-text="judge.pin"></td>
-                                        <td class="px-6 py-4" x-text="judge.email || '-'"></td>
-                                        <td class="px-6 py-4" x-text="judge.scores_count"></td>
-                                        <td class="px-6 py-4">
-                                            <button @click="deleteJudge(judge.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="judges.length === 0">
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                        No judges yet. Click "Add Judge" to create one.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Teams Page -->
-            <template x-if="currentPage === 'teams'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Manage Teams</h2>
-                        <button @click="showModal = 'team'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Add Team
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Competition</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Score</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="team in teams" :key="team.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="team.name"></td>
-                                        <td class="px-6 py-4" x-text="team.school_name || '-'"></td>
-                                        <td class="px-6 py-4" x-text="team.competition_name"></td>
-                                        <td class="px-6 py-4 font-bold text-ja" x-text="team.average_score?.toFixed(1) || '-'"></td>
-                                        <td class="px-6 py-4">
-                                            <button @click="deleteTeam(team.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="teams.length === 0">
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                        No teams yet. Click "Add Team" to create one.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Analytics Page -->
-            <template x-if="currentPage === 'analytics'">
-                <div>
-                    <h2 class="text-xl font-semibold mb-6">Analytics & Reports</h2>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="font-semibold mb-4">Top Teams</h3>
-                            <div class="space-y-3">
-                                <template x-for="(team, index) in analytics.top_teams || []" :key="team.name">
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
                                     <div class="flex items-center">
-                                        <span class="w-6 text-gray-500" x-text="index + 1"></span>
-                                        <span class="flex-1" x-text="team.name"></span>
-                                        <span class="font-bold text-ja" x-text="parseFloat(team.total_score || 0).toFixed(1)"></span>
+                                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                            <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Judges</p>
+                                            <p class="text-2xl font-bold" x-text="stats.judges_count || 0"></p>
+                                        </div>
                                     </div>
-                                </template>
-                                <p x-show="!analytics.top_teams || analytics.top_teams.length === 0" class="text-gray-500 text-center py-4">No scores yet</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                            <i data-lucide="users" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Teams</p>
+                                            <p class="text-2xl font-bold" x-text="stats.teams_scored_count || 0"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                            <i data-lucide="star" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Avg Score</p>
+                                            <p class="text-2xl font-bold" x-text="(analytics.average_score || 0).toFixed(1)"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow">
+                                <div class="px-6 py-4 border-b">
+                                    <h2 class="text-lg font-semibold">Recent Activity</h2>
+                                </div>
+                                <div class="p-6">
+                                    <div class="space-y-4">
+                                        <template x-for="activity in recentActivity" :key="activity.time">
+                                            <div class="flex items-center">
+                                                <div class="p-2 rounded-full bg-ja-50 text-ja">
+                                                    <i data-lucide="activity" class="w-4 h-4"></i>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <p class="text-sm font-medium" x-text="activity.action"></p>
+                                                    <p class="text-sm text-gray-500" x-text="activity.details"></p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <p x-show="recentActivity.length === 0" class="text-gray-500 text-center py-4">No recent activity</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="font-semibold mb-4">Summary</h3>
-                            <div class="space-y-3">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Total Scores</span>
-                                    <span class="font-bold" x-text="analytics.total_scores || 0"></span>
+                    </template>
+
+                    <!-- Competitions Page -->
+                    <template x-if="currentPage === 'competitions'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Manage Competitions</h2>
+                                <button @click="showModal = 'competition'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                                    Add Competition
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teams</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="comp in competitions" :key="comp.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="comp.name"></td>
+                                                <td class="px-6 py-4" x-text="comp.date"></td>
+                                                <td class="px-6 py-4">
+                                                    <span :class="{
+                                                        'bg-green-100 text-green-800': comp.status === 'active',
+                                                        'bg-yellow-100 text-yellow-800': comp.status === 'scheduled',
+                                                        'bg-gray-100 text-gray-800': comp.status === 'draft',
+                                                        'bg-ja-50 text-blue-800': comp.status === 'completed'
+                                                    }" class="px-2 py-1 rounded-full text-xs font-medium" x-text="comp.status"></span>
+                                                </td>
+                                                <td class="px-6 py-4" x-text="comp.teams_count"></td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteCompetition(comp.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="competitions.length === 0">
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">No competitions yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Judges Page -->
+                    <template x-if="currentPage === 'judges'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Manage Judges</h2>
+                                <button @click="showModal = 'judge'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                                    Add Judge
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIN</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scores</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="judge in judges" :key="judge.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="judge.name"></td>
+                                                <td class="px-6 py-4 font-mono bg-gray-50 text-ja font-bold" x-text="judge.pin"></td>
+                                                <td class="px-6 py-4" x-text="judge.email || '-'"></td>
+                                                <td class="px-6 py-4" x-text="judge.scores_count"></td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteJudge(judge.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="judges.length === 0">
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">No judges yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Teams Page -->
+                    <template x-if="currentPage === 'teams'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Manage Teams</h2>
+                                <button @click="showModal = 'team'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                                    Add Team
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Competition</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Score</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="team in teams" :key="team.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="team.name"></td>
+                                                <td class="px-6 py-4" x-text="team.school_name || '-'"></td>
+                                                <td class="px-6 py-4" x-text="team.competition_name"></td>
+                                                <td class="px-6 py-4 font-bold text-ja" x-text="(team.average_score || 0).toFixed(1)"></td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteTeam(team.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="teams.length === 0">
+                                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">No teams yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- CP Analytics Page -->
+                    <template x-if="currentPage === 'cp_analytics'">
+                        <div>
+                            <h2 class="text-xl font-semibold mb-6">Analytics & Reports</h2>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <h3 class="font-semibold mb-4">Top Teams</h3>
+                                    <div class="space-y-3">
+                                        <template x-for="(team, index) in analytics.top_teams || []" :key="team.name">
+                                            <div class="flex items-center">
+                                                <span class="w-6 text-gray-500" x-text="index + 1"></span>
+                                                <span class="flex-1" x-text="team.name"></span>
+                                                <span class="font-bold text-ja" x-text="parseFloat(team.total_score || 0).toFixed(1)"></span>
+                                            </div>
+                                        </template>
+                                        <p x-show="!analytics.top_teams || analytics.top_teams.length === 0" class="text-gray-500 text-center py-4">No scores yet</p>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Total Teams</span>
-                                    <span class="font-bold" x-text="analytics.total_teams || 0"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Active Judges</span>
-                                    <span class="font-bold" x-text="analytics.active_judges || 0"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Average Score</span>
-                                    <span class="font-bold" x-text="(analytics.average_score || 0).toFixed(1)"></span>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <h3 class="font-semibold mb-4">Summary</h3>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Total Scores</span>
+                                            <span class="font-bold" x-text="analytics.total_scores || 0"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Total Teams</span>
+                                            <span class="font-bold" x-text="analytics.total_teams || 0"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Active Judges</span>
+                                            <span class="font-bold" x-text="analytics.active_judges || 0"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Average Score</span>
+                                            <span class="font-bold" x-text="(analytics.average_score || 0).toFixed(1)"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </template>
+                    </template>
+                </main>
+            </div>
+        </div>
+    </template>
 
-            <!-- Quiz Masters Page -->
-            <template x-if="currentPage === 'quiz_masters'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Manage Quiz Masters</h2>
-                        <button @click="showModal = 'quizMaster'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Add Quiz Master
-                        </button>
+    <!-- Quiz Program (QP) Portal -->
+    <template x-if="activePortal === 'qp'">
+        <div class="flex">
+            <!-- QP Sidebar -->
+            <aside class="fixed inset-y-0 left-0 w-64 bg-purple-900 text-white transform transition-transform duration-200 ease-in-out z-30"
+                   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+                <div class="flex items-center justify-between h-16 bg-purple-950 px-4">
+                    <div class="flex items-center">
+                        <span class="text-2xl font-bold text-purple-300">QP</span>
+                        <span class="ml-2 text-lg font-semibold">Portal</span>
                     </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIN</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sessions</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="qm in quizMasters" :key="qm.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="qm.name"></td>
-                                        <td class="px-6 py-4" x-text="qm.email || '-'"></td>
-                                        <td class="px-6 py-4 font-mono text-ja font-bold" x-text="qm.pin"></td>
-                                        <td class="px-6 py-4" x-text="qm.sessions_count || 0"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="qm.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'" class="px-2 py-1 rounded-full text-xs" x-text="qm.is_active ? 'Active' : 'Inactive'"></span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <button @click="deleteQuizMaster(qm.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="quizMasters.length === 0">
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                                        No quiz masters yet. Click "Add Quiz Master" to create one.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <button @click="activePortal = null" class="text-purple-400 hover:text-white" title="Back to Portal Selection">
+                        <i data-lucide="grid" class="w-5 h-5"></i>
+                    </button>
                 </div>
-            </template>
-
-            <!-- Contestants Page -->
-            <template x-if="currentPage === 'contestants'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Manage Contestants</h2>
-                        <button @click="showModal = 'contestant'" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                            Add Contestant
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Access Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quizzes</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Accuracy</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="c in contestants" :key="c.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="c.name"></td>
-                                        <td class="px-6 py-4" x-text="c.school_name || '-'"></td>
-                                        <td class="px-6 py-4 font-mono text-ja font-bold" x-text="c.access_code"></td>
-                                        <td class="px-6 py-4" x-text="c.total_quizzes || 0"></td>
-                                        <td class="px-6 py-4" x-text="(c.accuracy_rate || 0) + '%'"></td>
-                                        <td class="px-6 py-4 font-bold text-ja" x-text="c.total_points || 0"></td>
-                                        <td class="px-6 py-4">
-                                            <button @click="deleteContestant(c.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="contestants.length === 0">
-                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                        No contestants yet. Click "Add Contestant" to create one.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <nav class="mt-6">
+                    <a href="#" @click.prevent="currentPage = 'qp_dashboard'" 
+                       :class="currentPage === 'qp_dashboard' ? 'bg-purple-700' : 'hover:bg-purple-800'"
+                       class="flex items-center px-6 py-3 text-purple-100">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'quiz_masters'"
+                       :class="currentPage === 'quiz_masters' ? 'bg-purple-700' : 'hover:bg-purple-800'"
+                       class="flex items-center px-6 py-3 text-purple-100">
+                        <i data-lucide="user-check" class="w-5 h-5 mr-3"></i>
+                        Quiz Masters
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'contestants'"
+                       :class="currentPage === 'contestants' ? 'bg-purple-700' : 'hover:bg-purple-800'"
+                       class="flex items-center px-6 py-3 text-purple-100">
+                        <i data-lucide="graduation-cap" class="w-5 h-5 mr-3"></i>
+                        Contestants
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'questions'"
+                       :class="currentPage === 'questions' ? 'bg-purple-700' : 'hover:bg-purple-800'"
+                       class="flex items-center px-6 py-3 text-purple-100">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-3"></i>
+                        Question Pool
+                    </a>
+                    <a href="#" @click.prevent="currentPage = 'quiz_sessions'"
+                       :class="currentPage === 'quiz_sessions' ? 'bg-purple-700' : 'hover:bg-purple-800'"
+                       class="flex items-center px-6 py-3 text-purple-100">
+                        <i data-lucide="gamepad-2" class="w-5 h-5 mr-3"></i>
+                        Quiz Sessions
+                    </a>
+                    
+                    <div class="px-6 py-2 mt-4 text-xs font-semibold text-purple-400 uppercase">Quick Links</div>
+                    <a href="{% url 'quiz_master_login' %}" target="_blank" class="flex items-center px-6 py-3 text-purple-100 hover:bg-purple-800">
+                        <i data-lucide="external-link" class="w-5 h-5 mr-3"></i>
+                        Quiz Master Portal
+                    </a>
+                    <a href="{% url 'contestant_login' %}" target="_blank" class="flex items-center px-6 py-3 text-purple-100 hover:bg-purple-800">
+                        <i data-lucide="user" class="w-5 h-5 mr-3"></i>
+                        Contestant Portal
+                    </a>
+                    <a href="{% url 'quiz_results' %}" target="_blank" class="flex items-center px-6 py-3 text-purple-100 hover:bg-purple-800">
+                        <i data-lucide="trophy" class="w-5 h-5 mr-3"></i>
+                        Leaderboard
+                    </a>
+                </nav>
+                <div class="absolute bottom-0 w-full p-4">
+                    <a href="{% url 'logout' %}" class="flex items-center text-purple-400 hover:text-white">
+                        <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                        Logout
+                    </a>
                 </div>
-            </template>
+            </aside>
 
-            <!-- Quiz Sessions Page -->
-            <template x-if="currentPage === 'quiz_sessions'">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Quiz Sessions</h2>
-                        <a href="{% url 'quiz_master_login' %}" target="_blank" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark">
-                            <i data-lucide="external-link" class="w-4 h-4 inline mr-2"></i>
-                            Open Quiz Master Portal
-                        </a>
+            <!-- QP Main Content -->
+            <div class="flex-1 md:ml-64">
+                <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6">
+                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-600">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs font-semibold rounded mr-3">QP</span>
+                        <h1 class="text-xl font-semibold text-gray-800" x-text="qpPageTitle"></h1>
                     </div>
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quiz Master</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room ID</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contestants</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Questions</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="s in quizSessions" :key="s.id">
-                                    <tr>
-                                        <td class="px-6 py-4 font-medium" x-text="s.title"></td>
-                                        <td class="px-6 py-4" x-text="s.quiz_master_name"></td>
-                                        <td class="px-6 py-4 font-mono text-xs" x-text="s.room_id"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="{
-                                                'bg-gray-100 text-gray-600': s.status === 'scheduled',
-                                                'bg-yellow-100 text-yellow-600': s.status === 'waiting',
-                                                'bg-green-100 text-green-600': s.status === 'live',
-                                                'bg-orange-100 text-orange-600': s.status === 'paused',
-                                                'bg-blue-100 text-blue-600': s.status === 'completed'
-                                            }" class="px-2 py-1 rounded-full text-xs" x-text="s.status_display"></span>
-                                        </td>
-                                        <td class="px-6 py-4" x-text="s.contestants_list?.length || 0"></td>
-                                        <td class="px-6 py-4" x-text="s.current_question_number + '/' + s.total_questions"></td>
-                                        <td class="px-6 py-4">
-                                            <button @click="deleteQuizSession(s.id)" class="text-red-600 hover:text-red-800">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="quizSessions.length === 0">
-                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                        No quiz sessions yet. Quiz Masters can create sessions from their portal.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </template>
-        </main>
-    </div>
+                    <span class="text-gray-600">{{ user.username }}</span>
+                </header>
 
-    <!-- Modal for Creating Items -->
+                <main class="p-6">
+                    <!-- QP Dashboard -->
+                    <template x-if="currentPage === 'qp_dashboard'">
+                        <div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                            <i data-lucide="user-check" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Quiz Masters</p>
+                                            <p class="text-2xl font-bold" x-text="quizMasters.length"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Contestants</p>
+                                            <p class="text-2xl font-bold" x-text="contestants.length"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                            <i data-lucide="help-circle" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Questions</p>
+                                            <p class="text-2xl font-bold" x-text="questionCount"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow p-6">
+                                    <div class="flex items-center">
+                                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                            <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm text-gray-500">Sessions</p>
+                                            <p class="text-2xl font-bold" x-text="quizSessions.length"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-white rounded-xl shadow">
+                                    <div class="px-6 py-4 border-b flex justify-between items-center">
+                                        <h2 class="text-lg font-semibold">Recent Quiz Masters</h2>
+                                        <button @click="currentPage = 'quiz_masters'" class="text-purple-600 text-sm hover:underline">View All</button>
+                                    </div>
+                                    <div class="p-6">
+                                        <template x-for="qm in quizMasters.slice(0, 5)" :key="qm.id">
+                                            <div class="flex items-center py-2 border-b last:border-0">
+                                                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold" x-text="qm.name.charAt(0)"></div>
+                                                <div class="ml-3">
+                                                    <p class="font-medium" x-text="qm.name"></p>
+                                                    <p class="text-sm text-gray-500">PIN: <span class="font-mono text-purple-600" x-text="qm.pin"></span></p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <p x-show="quizMasters.length === 0" class="text-gray-500 text-center py-4">No quiz masters yet</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl shadow">
+                                    <div class="px-6 py-4 border-b flex justify-between items-center">
+                                        <h2 class="text-lg font-semibold">Live Sessions</h2>
+                                        <button @click="currentPage = 'quiz_sessions'" class="text-purple-600 text-sm hover:underline">View All</button>
+                                    </div>
+                                    <div class="p-6">
+                                        <template x-for="s in quizSessions.filter(s => s.status === 'live').slice(0, 5)" :key="s.id">
+                                            <div class="flex items-center py-2 border-b last:border-0">
+                                                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse mr-3"></div>
+                                                <div>
+                                                    <p class="font-medium" x-text="s.title"></p>
+                                                    <p class="text-sm text-gray-500" x-text="s.quiz_master_name"></p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <p x-show="quizSessions.filter(s => s.status === 'live').length === 0" class="text-gray-500 text-center py-4">No live sessions</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Quiz Masters Page -->
+                    <template x-if="currentPage === 'quiz_masters'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Manage Quiz Masters</h2>
+                                <button @click="showModal = 'quizMaster'" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                                    Add Quiz Master
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIN</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sessions</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="qm in quizMasters" :key="qm.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="qm.name"></td>
+                                                <td class="px-6 py-4" x-text="qm.email || '-'"></td>
+                                                <td class="px-6 py-4 font-mono text-purple-600 font-bold" x-text="qm.pin"></td>
+                                                <td class="px-6 py-4" x-text="qm.sessions_count || 0"></td>
+                                                <td class="px-6 py-4">
+                                                    <span :class="qm.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'" class="px-2 py-1 rounded-full text-xs" x-text="qm.is_active ? 'Active' : 'Inactive'"></span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteQuizMaster(qm.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="quizMasters.length === 0">
+                                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">No quiz masters yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Contestants Page -->
+                    <template x-if="currentPage === 'contestants'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Manage Contestants</h2>
+                                <button @click="showModal = 'contestant'" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                                    Add Contestant
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Access Code</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quizzes</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Accuracy</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="c in contestants" :key="c.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="c.name"></td>
+                                                <td class="px-6 py-4" x-text="c.school_name || '-'"></td>
+                                                <td class="px-6 py-4 font-mono text-purple-600 font-bold" x-text="c.access_code"></td>
+                                                <td class="px-6 py-4" x-text="c.total_quizzes || 0"></td>
+                                                <td class="px-6 py-4" x-text="(c.accuracy_rate || 0) + '%'"></td>
+                                                <td class="px-6 py-4 font-bold text-purple-600" x-text="c.total_points || 0"></td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteContestant(c.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="contestants.length === 0">
+                                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">No contestants yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Questions Page (redirect to full page) -->
+                    <template x-if="currentPage === 'questions'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Question Pool</h2>
+                                <a href="{% url 'question_pool' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                    <i data-lucide="external-link" class="w-4 h-4 inline mr-2"></i>
+                                    Open Full Manager
+                                </a>
+                            </div>
+                            <div class="bg-white rounded-xl shadow p-8 text-center">
+                                <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-purple-100 flex items-center justify-center">
+                                    <i data-lucide="help-circle" class="w-10 h-10 text-purple-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold mb-2">Question Pool Manager</h3>
+                                <p class="text-gray-600 mb-6">Manage your quiz questions with the full-featured Question Pool Manager.</p>
+                                <p class="text-3xl font-bold text-purple-600 mb-4" x-text="questionCount + ' Questions'"></p>
+                                <a href="{% url 'question_pool' %}" class="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+                                    Open Question Pool
+                                </a>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Quiz Sessions Page -->
+                    <template x-if="currentPage === 'quiz_sessions'">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold">Quiz Sessions</h2>
+                                <a href="{% url 'quiz_master_login' %}" target="_blank" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                    <i data-lucide="external-link" class="w-4 h-4 inline mr-2"></i>
+                                    Open Quiz Master Portal
+                                </a>
+                            </div>
+                            <div class="bg-white rounded-xl shadow overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quiz Master</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room ID</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contestants</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        <template x-for="s in quizSessions" :key="s.id">
+                                            <tr>
+                                                <td class="px-6 py-4 font-medium" x-text="s.title"></td>
+                                                <td class="px-6 py-4" x-text="s.quiz_master_name"></td>
+                                                <td class="px-6 py-4 font-mono text-xs" x-text="s.room_id"></td>
+                                                <td class="px-6 py-4">
+                                                    <span :class="{
+                                                        'bg-gray-100 text-gray-600': s.status === 'scheduled',
+                                                        'bg-yellow-100 text-yellow-600': s.status === 'waiting',
+                                                        'bg-green-100 text-green-600': s.status === 'live',
+                                                        'bg-orange-100 text-orange-600': s.status === 'paused',
+                                                        'bg-blue-100 text-blue-600': s.status === 'completed'
+                                                    }" class="px-2 py-1 rounded-full text-xs" x-text="s.status_display || s.status"></span>
+                                                </td>
+                                                <td class="px-6 py-4" x-text="s.contestants_list?.length || 0"></td>
+                                                <td class="px-6 py-4" x-text="(s.current_question_number || 0) + '/' + (s.total_questions || 0)"></td>
+                                                <td class="px-6 py-4">
+                                                    <button @click="deleteQuizSession(s.id)" class="text-red-600 hover:text-red-800">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="quizSessions.length === 0">
+                                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">No quiz sessions yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                </main>
+            </div>
+        </div>
+    </template>
+
+    <!-- Modals -->
     <div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" @click.away="showModal = null">
+            
             <!-- Competition Form -->
             <template x-if="showModal === 'competition'">
                 <form @submit.prevent="createCompetition()">
@@ -639,7 +873,7 @@
                     </div>
                     <div class="flex justify-end gap-3 mt-6">
                         <button type="button" @click="showModal = null" class="px-4 py-2 border rounded-lg">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-ja text-white rounded-lg">Create</button>
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg">Create</button>
                     </div>
                 </form>
             </template>
@@ -665,7 +899,7 @@
                     </div>
                     <div class="flex justify-end gap-3 mt-6">
                         <button type="button" @click="showModal = null" class="px-4 py-2 border rounded-lg">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-ja text-white rounded-lg">Create</button>
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg">Create</button>
                     </div>
                 </form>
             </template>
@@ -677,8 +911,9 @@
 <script>
 function adminDashboard() {
     return {
+        activePortal: null,
         sidebarOpen: false,
-        currentPage: 'dashboard',
+        currentPage: '',
         showModal: null,
         stats: {},
         analytics: {},
@@ -686,10 +921,10 @@ function adminDashboard() {
         competitions: [],
         judges: [],
         teams: [],
-        // Quiz System
         quizMasters: [],
         contestants: [],
         quizSessions: [],
+        questionCount: 0,
         forms: {
             competition: { name: '', date: '', location: '' },
             judge: { name: '', email: '', competition: '' },
@@ -698,18 +933,32 @@ function adminDashboard() {
             contestant: { name: '', email: '', school_name: '' }
         },
 
-        get pageTitle() {
+        get cpPageTitle() {
             const titles = {
-                dashboard: 'Dashboard',
+                cp_dashboard: 'Dashboard',
                 competitions: 'Competitions',
                 judges: 'Judges',
                 teams: 'Teams',
-                analytics: 'Analytics',
+                cp_analytics: 'Analytics'
+            };
+            return titles[this.currentPage] || 'Dashboard';
+        },
+
+        get qpPageTitle() {
+            const titles = {
+                qp_dashboard: 'Dashboard',
                 quiz_masters: 'Quiz Masters',
                 contestants: 'Contestants',
+                questions: 'Question Pool',
                 quiz_sessions: 'Quiz Sessions'
             };
             return titles[this.currentPage] || 'Dashboard';
+        },
+
+        selectPortal(portal) {
+            this.activePortal = portal;
+            this.currentPage = portal === 'cp' ? 'cp_dashboard' : 'qp_dashboard';
+            this.$nextTick(() => lucide.createIcons());
         },
 
         async init() {
@@ -721,7 +970,8 @@ function adminDashboard() {
                 this.loadAnalytics(),
                 this.loadQuizMasters(),
                 this.loadContestants(),
-                this.loadQuizSessions()
+                this.loadQuizSessions(),
+                this.loadQuestionCount()
             ]);
         },
 
@@ -766,7 +1016,6 @@ function adminDashboard() {
             } catch (e) {}
         },
 
-        // Quiz System Methods
         async loadQuizMasters() {
             try {
                 const res = await fetch('/api/quiz/masters/');
@@ -791,48 +1040,12 @@ function adminDashboard() {
             } catch (e) {}
         },
 
-        async createQuizMaster() {
+        async loadQuestionCount() {
             try {
-                await fetch('/api/quiz/masters/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                    body: JSON.stringify(this.forms.quizMaster)
-                });
-                this.showModal = null;
-                this.forms.quizMaster = { name: '', email: '', phone: '' };
-                await this.loadQuizMasters();
+                const res = await fetch('/api/quiz/questions/');
+                const data = await res.json();
+                this.questionCount = data.count || (data.results || data || []).length;
             } catch (e) {}
-        },
-
-        async createContestant() {
-            try {
-                await fetch('/api/quiz/contestants/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                    body: JSON.stringify(this.forms.contestant)
-                });
-                this.showModal = null;
-                this.forms.contestant = { name: '', email: '', school_name: '' };
-                await this.loadContestants();
-            } catch (e) {}
-        },
-
-        async deleteQuizMaster(id) {
-            if (!confirm('Delete this quiz master?')) return;
-            await fetch(`/api/quiz/masters/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
-            await this.loadQuizMasters();
-        },
-
-        async deleteContestant(id) {
-            if (!confirm('Delete this contestant?')) return;
-            await fetch(`/api/quiz/contestants/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
-            await this.loadContestants();
-        },
-
-        async deleteQuizSession(id) {
-            if (!confirm('Delete this quiz session?')) return;
-            await fetch(`/api/quiz/sessions/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
-            await this.loadQuizSessions();
         },
 
         async createCompetition() {
@@ -876,6 +1089,32 @@ function adminDashboard() {
             } catch (e) {}
         },
 
+        async createQuizMaster() {
+            try {
+                await fetch('/api/quiz/masters/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify(this.forms.quizMaster)
+                });
+                this.showModal = null;
+                this.forms.quizMaster = { name: '', email: '', phone: '' };
+                await this.loadQuizMasters();
+            } catch (e) {}
+        },
+
+        async createContestant() {
+            try {
+                await fetch('/api/quiz/contestants/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify(this.forms.contestant)
+                });
+                this.showModal = null;
+                this.forms.contestant = { name: '', email: '', school_name: '' };
+                await this.loadContestants();
+            } catch (e) {}
+        },
+
         async deleteCompetition(id) {
             if (!confirm('Delete this competition?')) return;
             await fetch(`/api/competitions/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
@@ -894,14 +1133,25 @@ function adminDashboard() {
             await this.loadTeams();
         },
 
-        editCompetition(comp) {
-            this.forms.competition = { ...comp };
-            this.showModal = 'competition';
+        async deleteQuizMaster(id) {
+            if (!confirm('Delete this quiz master?')) return;
+            await fetch(`/api/quiz/masters/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
+            await this.loadQuizMasters();
+        },
+
+        async deleteContestant(id) {
+            if (!confirm('Delete this contestant?')) return;
+            await fetch(`/api/quiz/contestants/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
+            await this.loadContestants();
+        },
+
+        async deleteQuizSession(id) {
+            if (!confirm('Delete this quiz session?')) return;
+            await fetch(`/api/quiz/sessions/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
+            await this.loadQuizSessions();
         }
     }
 }
 </script>
 {% endblock %}
 {% endblock %}
-
-
