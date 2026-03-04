@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz Results - JA Nigeria{% endblock %}
+
+{% block content %}
+<div x-data="quizResults()" x-init="init()" class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-ja to-ja-dark text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-6">
+                <span class="text-4xl">🏆</span>
+            </div>
+            <h1 class="text-4xl font-bold mb-4">Quiz Leaderboard</h1>
+            <p class="text-xl text-white/80">See who's leading the competition!</p>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 py-12 -mt-8">
+        <!-- Session Selector -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <label class="text-gray-700 font-medium">Select Quiz Session:</label>
+                <select x-model="selectedSession" @change="loadLeaderboard()"
+                        class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                    <option value="">All Sessions</option>
+                    <template x-for="session in sessions" :key="session.id">
+                        <option :value="session.id" x-text="session.title"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Top 3 Podium -->
+        <div class="flex justify-center items-end space-x-4 mb-12" x-show="leaderboard.length >= 3">
+            <!-- 2nd Place -->
+            <div class="text-center">
+                <div class="w-24 h-24 mb-4 mx-auto relative">
+                    <div class="w-full h-full bg-gray-400 rounded-full flex items-center justify-center text-3xl font-bold text-white">
+                        <span x-text="leaderboard[1]?.contestant_name?.charAt(0) || '2'"></span>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                </div>
+                <div class="bg-gray-400 rounded-t-xl w-32 pt-4 pb-2">
+                    <p class="text-white font-bold truncate px-2" x-text="leaderboard[1]?.contestant_name || '-'"></p>
+                    <p class="text-white/80 text-2xl font-bold" x-text="leaderboard[1]?.final_score || 0"></p>
+                    <p class="text-white/60 text-xs">points</p>
+                </div>
+                <div class="bg-gray-400/80 h-24 w-32 rounded-b-lg"></div>
+            </div>
+
+            <!-- 1st Place -->
+            <div class="text-center">
+                <div class="w-28 h-28 mb-4 mx-auto relative">
+                    <div class="w-full h-full bg-yellow-500 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-lg">
+                        <span x-text="leaderboard[0]?.contestant_name?.charAt(0) || '1'"></span>
+                    </div>
+                    <div class="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                        <span class="text-2xl">👑</span>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center text-white font-bold">1</div>
+                </div>
+                <div class="bg-yellow-500 rounded-t-xl w-36 pt-6 pb-3">
+                    <p class="text-white font-bold truncate px-2" x-text="leaderboard[0]?.contestant_name || '-'"></p>
+                    <p class="text-white/90 text-3xl font-bold" x-text="leaderboard[0]?.final_score || 0"></p>
+                    <p class="text-white/70 text-sm">points</p>
+                </div>
+                <div class="bg-yellow-500/80 h-32 w-36 rounded-b-lg"></div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="text-center">
+                <div class="w-20 h-20 mb-4 mx-auto relative">
+                    <div class="w-full h-full bg-orange-400 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                        <span x-text="leaderboard[2]?.contestant_name?.charAt(0) || '3'"></span>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                </div>
+                <div class="bg-orange-400 rounded-t-xl w-28 pt-3 pb-2">
+                    <p class="text-white font-bold truncate px-2 text-sm" x-text="leaderboard[2]?.contestant_name || '-'"></p>
+                    <p class="text-white/80 text-xl font-bold" x-text="leaderboard[2]?.final_score || 0"></p>
+                    <p class="text-white/60 text-xs">points</p>
+                </div>
+                <div class="bg-orange-400/80 h-16 w-28 rounded-b-lg"></div>
+            </div>
+        </div>
+
+        <!-- Full Leaderboard -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800">Full Rankings</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                <template x-for="(score, index) in leaderboard" :key="index">
+                    <div class="flex items-center p-4 hover:bg-gray-50 transition-colors">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full mr-4"
+                             :class="{
+                                 'bg-yellow-100 text-yellow-700': index === 0,
+                                 'bg-gray-100 text-gray-600': index === 1,
+                                 'bg-orange-100 text-orange-600': index === 2,
+                                 'bg-gray-50 text-gray-500': index > 2
+                             }">
+                            <span class="font-bold" x-text="index + 1"></span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900" x-text="score.contestant_name"></p>
+                            <p class="text-sm text-gray-500">
+                                <span x-text="score.correct_answers"></span>/<span x-text="score.total_questions"></span> correct
+                                · <span x-text="Math.round(score.accuracy || 0)"></span>% accuracy
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-ja" x-text="score.final_score"></p>
+                            <p class="text-xs text-gray-400">points</p>
+                        </div>
+                        <div x-show="score.is_disqualified" class="ml-4">
+                            <span class="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-full">DQ</span>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="leaderboard.length === 0" class="p-8 text-center text-gray-500">
+                    <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                    <p>No results yet. Check back when a quiz session completes!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="text-center mt-8">
+            <a href="{% url 'index' %}" class="text-white/80 hover:text-white">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function quizResults() {
+    return {
+        sessions: [],
+        selectedSession: '',
+        leaderboard: [],
+
+        async init() {
+            await this.loadSessions();
+            await this.loadLeaderboard();
+            this.$nextTick(() => lucide.createIcons());
+        },
+
+        async loadSessions() {
+            try {
+                const response = await fetch('/api/quiz/sessions/?status=completed');
+                this.sessions = await response.json();
+            } catch (e) {
+                console.error('Failed to load sessions:', e);
+            }
+        },
+
+        async loadLeaderboard() {
+            try {
+                let url = '/api/quiz/scores/';
+                if (this.selectedSession) {
+                    // Load specific session leaderboard
+                    const response = await fetch(`/api/quiz/sessions/${this.selectedSession}/leaderboard/`);
+                    const data = await response.json();
+                    this.leaderboard = data.leaderboard || [];
+                } else {
+                    // Load all scores sorted by final_score
+                    const response = await fetch('/api/quiz/scores/?ordering=-final_score');
+                    const data = await response.json();
+                    this.leaderboard = data.map(s => ({
+                        contestant_name: s.contestant_name,
+                        correct_answers: s.correct_answers,
+                        total_questions: s.total_questions,
+                        final_score: s.final_score,
+                        accuracy: s.accuracy_percentage,
+                        is_disqualified: s.is_disqualified
+                    }));
+                }
+            } catch (e) {
+                console.error('Failed to load leaderboard:', e);
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

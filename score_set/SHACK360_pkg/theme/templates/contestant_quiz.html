@@ -1,0 +1,560 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz - JA Nigeria{% endblock %}
+
+{% block content %}
+<div x-data="contestantQuiz()" x-init="init()" class="min-h-screen bg-gray-900">
+    <!-- Fullscreen Warning -->
+    <div x-show="!isFullscreen && session?.fullscreen_required" 
+         class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+        <div class="text-center max-w-md mx-auto px-4">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-ja rounded-full mb-6">
+                <i data-lucide="maximize" class="w-10 h-10 text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-4">Fullscreen Required</h2>
+            <p class="text-gray-300 mb-6">This quiz requires fullscreen mode to prevent distractions and ensure fair play.</p>
+            <button @click="enterFullscreen()" class="bg-ja hover:bg-ja-dark text-white px-8 py-3 rounded-lg font-medium">
+                Enter Fullscreen Mode
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Quiz Interface -->
+    <div class="h-screen flex flex-col" :class="{'filter blur-sm': !isFullscreen && session?.fullscreen_required}">
+        <!-- Top Bar -->
+        <div class="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <span class="text-xl font-bold">🧠 Quiz</span>
+                <span class="bg-white/10 px-3 py-1 rounded-full text-sm" x-text="contestant?.name || 'Loading...'"></span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Network Status -->
+                <div class="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-lg">
+                    <span :class="{
+                        'bg-green-400': networkStatus === 'good',
+                        'bg-yellow-400': networkStatus === 'fair',
+                        'bg-red-400': networkStatus === 'poor'
+                    }" class="w-3 h-3 rounded-full"></span>
+                    <span class="text-xs" x-text="ping + 'ms'"></span>
+                </div>
+                <!-- Score -->
+                <div class="bg-ja/20 text-ja-light px-3 py-1 rounded-lg">
+                    <span class="text-xs">Score:</span>
+                    <span class="font-bold ml-1" x-text="currentScore"></span>
+                </div>
+                <!-- Warnings -->
+                <div x-show="warnings > 0" class="bg-red-500/20 text-red-400 px-3 py-1 rounded-lg">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 inline"></i>
+                    <span class="text-xs ml-1" x-text="warnings + '/' + (session?.max_warnings || 3)"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Left: Video Feed -->
+            <div class="w-80 bg-gray-800 p-4 flex flex-col">
+                <!-- Self Video -->
+                <div class="relative mb-4">
+                    <div class="bg-black rounded-lg aspect-video">
+                        <video id="selfVideo" autoplay muted playsinline class="w-full h-full rounded-lg object-cover"></video>
+                    </div>
+                    <span class="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">You</span>
+                    <!-- Face Detection Indicator -->
+                    <div class="absolute top-2 right-2">
+                        <span :class="faceDetected ? 'bg-green-500' : 'bg-red-500'" class="w-3 h-3 rounded-full block animate-pulse"></span>
+                    </div>
+                </div>
+
+                <!-- Quiz Master Video -->
+                <div class="relative flex-1">
+                    <div class="bg-black rounded-lg h-full flex items-center justify-center">
+                        <video id="quizMasterVideo" autoplay playsinline class="w-full h-full rounded-lg object-cover"></video>
+                        <div x-show="!quizMasterConnected" class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <i data-lucide="user" class="w-12 h-12 mx-auto mb-2"></i>
+                                <p class="text-sm">Quiz Master</p>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">Quiz Master</span>
+                </div>
+            </div>
+
+            <!-- Right: Question Area -->
+            <div class="flex-1 flex flex-col p-6 overflow-y-auto">
+                <!-- Waiting for Session -->
+                <template x-if="!session || session.status === 'waiting'">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-ja/20 rounded-full mb-6">
+                                <i data-lucide="clock" class="w-12 h-12 text-ja"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Waiting for Quiz to Start</h2>
+                            <p class="text-gray-400 mb-6">The quiz master will begin shortly...</p>
+                            <div class="flex items-center justify-center space-x-2">
+                                <span class="w-3 h-3 bg-ja rounded-full animate-bounce"></span>
+                                <span class="w-3 h-3 bg-ja rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                                <span class="w-3 h-3 bg-ja rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Active Question -->
+                <template x-if="session?.status === 'live' && currentQuestion">
+                    <div class="flex-1 flex flex-col">
+                        <!-- Timer Bar -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-400">Question <span x-text="questionNumber"></span> of <span x-text="session.total_questions"></span></span>
+                                <span class="text-3xl font-bold" :class="timer <= 10 ? 'text-red-500' : 'text-white'" x-text="timer + 's'"></span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="h-4 rounded-full transition-all duration-1000"
+                                     :class="timer <= 10 ? 'bg-red-500' : 'bg-ja'"
+                                     :style="'width: ' + (timer / currentQuestion.time_limit * 100) + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Question Card -->
+                        <div class="bg-gradient-to-br from-ja to-ja-dark rounded-2xl p-8 mb-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="bg-white/20 px-4 py-1 rounded-full text-white text-sm">
+                                    Q<span x-text="currentQuestion.question_number"></span>
+                                </span>
+                                <div class="flex space-x-2">
+                                    <span class="bg-white/20 px-3 py-1 rounded text-white text-xs" x-text="currentQuestion.difficulty_display"></span>
+                                    <span class="bg-white/20 px-3 py-1 rounded text-white text-xs" x-text="currentQuestion.points + ' pts'"></span>
+                                </div>
+                            </div>
+                            <p class="text-2xl text-white font-medium" x-text="currentQuestion.question_text"></p>
+                        </div>
+
+                        <!-- Answer Options -->
+                        <div x-show="currentQuestion.question_type === 'mcq'" class="grid grid-cols-2 gap-4 mb-6">
+                            <button @click="selectAnswer('A')" 
+                                    :class="selectedAnswer === 'A' ? 'bg-ja text-white border-ja' : 'bg-gray-800 text-white border-gray-700 hover:border-ja'"
+                                    class="p-4 rounded-xl border-2 text-left transition-all">
+                                <span class="font-bold text-lg">A.</span>
+                                <span class="ml-2" x-text="currentQuestion.option_a"></span>
+                            </button>
+                            <button @click="selectAnswer('B')" 
+                                    :class="selectedAnswer === 'B' ? 'bg-ja text-white border-ja' : 'bg-gray-800 text-white border-gray-700 hover:border-ja'"
+                                    class="p-4 rounded-xl border-2 text-left transition-all">
+                                <span class="font-bold text-lg">B.</span>
+                                <span class="ml-2" x-text="currentQuestion.option_b"></span>
+                            </button>
+                            <button @click="selectAnswer('C')" 
+                                    :class="selectedAnswer === 'C' ? 'bg-ja text-white border-ja' : 'bg-gray-800 text-white border-gray-700 hover:border-ja'"
+                                    class="p-4 rounded-xl border-2 text-left transition-all">
+                                <span class="font-bold text-lg">C.</span>
+                                <span class="ml-2" x-text="currentQuestion.option_c"></span>
+                            </button>
+                            <button @click="selectAnswer('D')" 
+                                    :class="selectedAnswer === 'D' ? 'bg-ja text-white border-ja' : 'bg-gray-800 text-white border-gray-700 hover:border-ja'"
+                                    class="p-4 rounded-xl border-2 text-left transition-all">
+                                <span class="font-bold text-lg">D.</span>
+                                <span class="ml-2" x-text="currentQuestion.option_d"></span>
+                            </button>
+                        </div>
+
+                        <!-- Text Answer -->
+                        <div x-show="currentQuestion.question_type !== 'mcq'" class="mb-6">
+                            <input type="text" x-model="textAnswer" 
+                                   placeholder="Type your answer here..."
+                                   class="w-full bg-gray-800 text-white text-xl p-4 rounded-xl border-2 border-gray-700 focus:border-ja focus:ring-0">
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button @click="submitAnswer()" 
+                                :disabled="submitting || (!selectedAnswer && !textAnswer)"
+                                class="bg-green-500 hover:bg-green-600 text-white text-xl font-bold py-4 rounded-xl transition-colors disabled:opacity-50">
+                            <span x-show="!submitting">Submit Answer</span>
+                            <span x-show="submitting">Submitting...</span>
+                        </button>
+
+                        <!-- Answer Result -->
+                        <div x-show="showResult" x-transition class="mt-4 p-4 rounded-xl text-center"
+                             :class="lastAnswerCorrect ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'">
+                            <span class="text-2xl" x-text="lastAnswerCorrect ? '✓ Correct!' : '✗ Wrong'"></span>
+                            <span x-show="!lastAnswerCorrect" class="block text-sm mt-1">
+                                Correct answer: <span x-text="correctAnswer"></span>
+                            </span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Quiz Paused -->
+                <template x-if="session?.status === 'paused'">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-orange-500/20 rounded-full mb-6">
+                                <i data-lucide="pause" class="w-12 h-12 text-orange-500"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Quiz Paused</h2>
+                            <p class="text-gray-400">The quiz master has paused the session</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Quiz Completed -->
+                <template x-if="session?.status === 'completed'">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-ja/20 rounded-full mb-6">
+                                <i data-lucide="trophy" class="w-12 h-12 text-ja"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Quiz Completed!</h2>
+                            <p class="text-gray-400 mb-6">Thank you for participating</p>
+                            <div class="bg-gray-800 rounded-xl p-6 max-w-sm mx-auto">
+                                <p class="text-gray-400 mb-2">Your Score</p>
+                                <p class="text-5xl font-bold text-ja" x-text="currentScore"></p>
+                                <p class="text-gray-500 mt-2">points</p>
+                            </div>
+                            <a href="{% url 'quiz_results' %}" class="inline-block mt-6 bg-ja hover:bg-ja-dark text-white px-6 py-3 rounded-lg">
+                                View Leaderboard
+                            </a>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Disqualified -->
+                <template x-if="isDisqualified">
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-red-500/20 rounded-full mb-6">
+                                <i data-lucide="x-circle" class="w-12 h-12 text-red-500"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Disqualified</h2>
+                            <p class="text-gray-400 mb-2">You have been disqualified from this quiz</p>
+                            <p class="text-red-400 text-sm" x-text="disqualificationReason"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function contestantQuiz() {
+    return {
+        contestant: null,
+        session: null,
+        currentQuestion: null,
+        questionNumber: 0,
+        timer: 30,
+        timerInterval: null,
+        questionStartTime: null,
+        
+        selectedAnswer: '',
+        textAnswer: '',
+        submitting: false,
+        showResult: false,
+        lastAnswerCorrect: false,
+        correctAnswer: '',
+        currentScore: 0,
+        warnings: 0,
+        isDisqualified: false,
+        disqualificationReason: '',
+        
+        // Video & Proctoring
+        localStream: null,
+        faceDetected: true,
+        quizMasterConnected: false,
+        isFullscreen: false,
+        
+        // Network
+        ping: 0,
+        networkStatus: 'good',
+
+        async init() {
+            // Check if contestant is logged in
+            const contestantData = localStorage.getItem('contestant');
+            if (!contestantData) {
+                window.location.href = '/quiz/contestant/';
+                return;
+            }
+            this.contestant = JSON.parse(contestantData);
+            
+            // Setup video
+            await this.setupVideo();
+            
+            // Setup proctoring
+            this.setupProctoring();
+            
+            // Monitor network
+            this.monitorNetwork();
+            
+            // Join session if room ID provided
+            const roomId = localStorage.getItem('roomId');
+            if (roomId) {
+                await this.joinSession(roomId);
+            }
+            
+            // Poll for updates
+            setInterval(() => this.pollUpdates(), 2000);
+            
+            // Fullscreen detection
+            document.addEventListener('fullscreenchange', () => {
+                this.isFullscreen = !!document.fullscreenElement;
+                if (!this.isFullscreen && this.session?.fullscreen_required && this.session?.status === 'live') {
+                    this.reportAlert('fullscreen_exit', 'Exited fullscreen mode');
+                }
+            });
+            
+            // Tab switch detection
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && this.session?.tab_switch_detection && this.session?.status === 'live') {
+                    this.reportAlert('tab_switch', 'Switched to another tab');
+                }
+            });
+            
+            this.$nextTick(() => lucide.createIcons());
+        },
+
+        async setupVideo() {
+            try {
+                this.localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                document.getElementById('selfVideo').srcObject = this.localStream;
+            } catch (e) {
+                console.error('Failed to setup video:', e);
+            }
+        },
+
+        setupProctoring() {
+            if (!this.localStream) return;
+            
+            // Simulated face detection (would use MediaPipe/OpenCV in production)
+            setInterval(() => {
+                // Random face detection status for demo
+                // In production, use actual face detection
+                if (this.session?.movement_detection) {
+                    // Check if face is detected (simulated)
+                    const detected = Math.random() > 0.05; // 95% detection rate
+                    if (!detected && this.faceDetected) {
+                        this.reportAlert('no_face', 'Face not detected');
+                    }
+                    this.faceDetected = detected;
+                }
+            }, 3000);
+        },
+
+        monitorNetwork() {
+            setInterval(async () => {
+                const start = performance.now();
+                try {
+                    await fetch('/api/quiz/questions/?limit=1', { method: 'HEAD' });
+                    this.ping = Math.round(performance.now() - start);
+                    this.networkStatus = this.ping < 50 ? 'good' : this.ping < 120 ? 'fair' : 'poor';
+                    
+                    // Log network status
+                    if (this.session) {
+                        await fetch('/api/quiz/network/log/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                session_id: this.session.id,
+                                contestant_id: this.contestant.id,
+                                ping_ms: this.ping,
+                                packet_loss: 0,
+                                jitter_ms: Math.round(Math.random() * 20)
+                            })
+                        });
+                    }
+                } catch (e) {
+                    this.networkStatus = 'poor';
+                    this.ping = 999;
+                }
+            }, 5000);
+        },
+
+        async joinSession(roomId) {
+            try {
+                // Find session by room ID
+                const response = await fetch(`/api/quiz/sessions/?room_id=${roomId}`);
+                const sessions = await response.json();
+                
+                if (sessions.length > 0) {
+                    const session = sessions[0];
+                    
+                    // Join the session
+                    const joinResponse = await fetch(`/api/quiz/sessions/${session.id}/join/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ contestant_id: this.contestant.id })
+                    });
+                    
+                    if (joinResponse.ok) {
+                        this.session = session;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to join session:', e);
+            }
+        },
+
+        enterFullscreen() {
+            document.documentElement.requestFullscreen();
+            this.isFullscreen = true;
+        },
+
+        async pollUpdates() {
+            if (!this.session) {
+                // Try to find an available session
+                try {
+                    const response = await fetch('/api/quiz/sessions/?status=waiting');
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        // Join first available session
+                        const session = data[0];
+                        await fetch(`/api/quiz/sessions/${session.id}/join/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ contestant_id: this.contestant.id })
+                        });
+                        this.session = session;
+                    }
+                } catch (e) {}
+                return;
+            }
+            
+            // Update session status
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/`);
+                const updatedSession = await response.json();
+                this.session = updatedSession;
+                
+                // Check for new question from session
+                // In production, use WebSocket for real-time updates
+            } catch (e) {}
+            
+            // Update score
+            try {
+                const scoreResponse = await fetch(`/api/quiz/scores/?session=${this.session.id}&contestant=${this.contestant.id}`);
+                const scores = await scoreResponse.json();
+                if (scores.length > 0) {
+                    this.currentScore = scores[0].final_score;
+                    this.warnings = scores[0].warnings_count;
+                    if (scores[0].is_disqualified) {
+                        this.isDisqualified = true;
+                        this.disqualificationReason = scores[0].disqualification_reason;
+                    }
+                }
+            } catch (e) {}
+        },
+
+        selectAnswer(option) {
+            if (this.submitting) return;
+            this.selectedAnswer = option;
+        },
+
+        async submitAnswer() {
+            if (this.submitting) return;
+            if (!this.selectedAnswer && !this.textAnswer) return;
+            
+            this.submitting = true;
+            const timeTaken = (Date.now() - (this.questionStartTime || Date.now())) / 1000;
+            
+            const answer = this.selectedAnswer || this.textAnswer;
+            
+            try {
+                const response = await fetch('/api/quiz/answers/submit/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        session_id: this.session.id,
+                        contestant_id: this.contestant.id,
+                        question_id: this.currentQuestion.id,
+                        answer: answer,
+                        time_taken: timeTaken
+                    })
+                });
+                
+                const result = await response.json();
+                
+                this.lastAnswerCorrect = result.is_correct;
+                this.correctAnswer = result.correct_answer;
+                this.currentScore = result.total_score;
+                this.showResult = true;
+                
+                // Hide result after 2 seconds
+                setTimeout(() => {
+                    this.showResult = false;
+                    this.selectedAnswer = '';
+                    this.textAnswer = '';
+                }, 2000);
+                
+            } catch (e) {
+                console.error('Error submitting answer:', e);
+            } finally {
+                this.submitting = false;
+            }
+        },
+
+        async reportAlert(alertType, description) {
+            if (!this.session) return;
+            
+            try {
+                const response = await fetch('/api/quiz/alerts/report/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        session_id: this.session.id,
+                        contestant_id: this.contestant.id,
+                        alert_type: alertType,
+                        description: description,
+                        severity: 'medium'
+                    })
+                });
+                
+                const result = await response.json();
+                this.warnings = result.warnings_count;
+                
+                if (result.is_disqualified) {
+                    this.isDisqualified = true;
+                    this.disqualificationReason = 'Maximum warnings exceeded';
+                }
+            } catch (e) {
+                console.error('Error reporting alert:', e);
+            }
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+}
+</script>
+{% endblock %}

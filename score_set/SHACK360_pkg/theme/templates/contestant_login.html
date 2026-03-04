@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Join Quiz - JA Nigeria{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-ja to-ja-dark flex items-center justify-center px-4">
+    <div class="max-w-md w-full" x-data="contestantLogin()">
+        <!-- Logo & Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
+                <span class="text-4xl">🧠</span>
+            </div>
+            <h1 class="text-3xl font-bold text-white">Join Quiz</h1>
+            <p class="text-white/80 mt-2">Enter your access code to participate</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <form @submit.prevent="login()">
+                <div class="space-y-6">
+                    <!-- Access Code Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Access Code</label>
+                        <input type="text" 
+                               x-model="accessCode"
+                               @input="accessCode = accessCode.toUpperCase()"
+                               maxlength="8"
+                               placeholder="e.g., ABCD1234"
+                               class="w-full text-center text-2xl font-mono tracking-wider border-2 rounded-lg py-4 focus:border-ja focus:ring-2 focus:ring-ja"
+                               :class="accessCode.length === 8 ? 'border-ja bg-ja/5' : 'border-gray-300'">
+                    </div>
+
+                    <!-- Room ID (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Room ID (if provided)</label>
+                        <input type="text" 
+                               x-model="roomId"
+                               placeholder="Enter room ID to join specific session"
+                               class="w-full border-2 rounded-lg px-4 py-3 focus:border-ja focus:ring-2 focus:ring-ja border-gray-300">
+                    </div>
+
+                    <!-- Error Message -->
+                    <div x-show="error" x-transition class="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center">
+                        <i data-lucide="alert-circle" class="w-4 h-4 inline"></i>
+                        <span x-text="error"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            :disabled="loading || accessCode.length !== 8"
+                            class="w-full bg-ja hover:bg-ja-dark text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!loading">Join Quiz</span>
+                        <span x-show="loading" class="flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Joining...
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Info Box -->
+            <div class="mt-6 bg-blue-50 text-blue-700 p-4 rounded-lg text-sm">
+                <p class="font-medium mb-1">📋 Requirements:</p>
+                <ul class="list-disc list-inside space-y-1 text-blue-600">
+                    <li>Stable internet connection</li>
+                    <li>Working camera & microphone</li>
+                    <li>Quiet environment</li>
+                    <li>Full screen mode will be required</li>
+                </ul>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <a href="{% url 'index' %}" class="text-ja hover:text-ja-dark">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Quiz Master Link -->
+        <div class="text-center mt-6">
+            <p class="text-white/80">
+                Are you a Quiz Master? 
+                <a href="{% url 'quiz_master_login' %}" class="text-white font-medium underline">Login Here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function contestantLogin() {
+    return {
+        accessCode: '',
+        roomId: '',
+        loading: false,
+        error: '',
+
+        async login() {
+            if (this.accessCode.length !== 8) {
+                this.error = 'Please enter a valid 8-character access code';
+                return;
+            }
+
+            this.loading = true;
+            this.error = '';
+
+            try {
+                // Login contestant
+                const loginResponse = await fetch('/api/quiz/contestants/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ access_code: this.accessCode })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok || !loginData.success) {
+                    this.error = loginData.error || 'Invalid access code';
+                    return;
+                }
+
+                // Store contestant data
+                localStorage.setItem('contestant', JSON.stringify(loginData.contestant));
+
+                // If room ID provided, try to join
+                if (this.roomId) {
+                    localStorage.setItem('roomId', this.roomId);
+                }
+
+                window.location.href = '/quiz/play/';
+            } catch (e) {
+                this.error = 'Connection error. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+}
+</script>
+{% endblock %}

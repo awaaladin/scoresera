@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Junior Achievement Nigeria - Scoring System{% endblock %}
+
+{% block content %}
+<div x-data="{ mobileMenuOpen: false }">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'index' %}" class="flex items-center">
+                        <span class="text-2xl font-bold text-ja">JA</span>
+                        <span class="ml-2 text-xl font-semibold text-gray-800">Nigeria</span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'results' %}" class="text-gray-600 hover:text-ja px-3 py-2">Live Results</a>
+                    <a href="{% url 'login' %}" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark transition" style="background-color: #285F74;">
+                        Admin Login
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-ja">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div x-show="mobileMenuOpen" x-cloak class="md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
+                <a href="{% url 'results' %}" class="block px-3 py-2 text-gray-600 hover:bg-gray-100 rounded">Live Results</a>
+                <a href="{% url 'login' %}" class="block px-3 py-2 bg-ja text-white rounded hover:bg-ja-dark" style="background-color: #285F74;">Admin Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-ja to-ja-dark text-white py-20" style="background: linear-gradient(to bottom right, #285F74, #1f4a5b);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                    Junior Achievement Nigeria
+                </h1>
+                <p class="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto">
+                    Empowering young people to own their economic success through entrepreneurship and innovation competitions.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'judge_login' %}" class="bg-white text-ja px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-flex items-center justify-center">
+                        <i data-lucide="clipboard-check" class="w-5 h-5 inline mr-2"></i>
+                        Judge Login
+                    </a>
+                    <a href="{% url 'results' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-ja transition inline-flex items-center justify-center">
+                        <i data-lucide="trophy" class="w-5 h-5 inline mr-2"></i>
+                        View Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Competition Scoring System</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    A modern platform for managing and scoring student entrepreneurship competitions across Nigeria.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition">
+                    <div class="bg-ja-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="users" class="w-8 h-8 text-ja"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Team Management</h3>
+                    <p class="text-gray-600">
+                        Register and manage competing teams, track their progress, and organize competitions efficiently.
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="clipboard-list" class="w-8 h-8 text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Real-time Scoring</h3>
+                    <p class="text-gray-600">
+                        Judges can submit scores in real-time with weighted criteria for innovation, impact, and presentation.
+                    </p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="bg-gray-50 rounded-xl p-8 text-center hover:shadow-lg transition">
+                    <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Live Results</h3>
+                    <p class="text-gray-600">
+                        Watch the leaderboard update live as scores come in, with detailed analytics and reports.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Our Mission</h2>
+                    <p class="text-gray-600 mb-6 text-lg">
+                        To inspire and prepare young people to succeed in a global economy through hands-on entrepreneurship programs and competitions.
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-1"></i>
+                            <span class="text-gray-600">Empower youth with business and financial literacy skills</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-1"></i>
+                            <span class="text-gray-600">Foster innovation and creative problem-solving</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-1"></i>
+                            <span class="text-gray-600">Connect students with mentors and industry leaders</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-gradient-to-br from-ja to-ja-dark rounded-2xl p-8 text-white" style="background: linear-gradient(to bottom right, #3a7a91, #1f4a5b);">
+                    <h3 class="text-2xl font-bold mb-6">Quick Stats</h3>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="text-center">
+                            <div class="text-4xl font-bold mb-2" id="stat-competitions">0</div>
+                            <div class="text-white/70">Competitions</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold mb-2" id="stat-judges">0</div>
+                            <div class="text-white/70">Judges</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold mb-2" id="stat-teams">0</div>
+                            <div class="text-white/70">Teams</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold mb-2" id="stat-scores">0</div>
+                            <div class="text-white/70">Scores</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-ja" style="background-color: #285F74;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+            <p class="text-white/80 mb-8 max-w-xl mx-auto">
+                Whether you're an administrator, judge, or just want to view results, we've got you covered.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'login' %}" class="bg-white text-ja px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-flex items-center justify-center">
+                    Admin Login
+                </a>
+                <a href="{% url 'judge_login' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-ja transition inline-flex items-center justify-center">
+                    Judge Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="col-span-2">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl font-bold text-cyan-400">JA</span>
+                        <span class="ml-2 text-xl font-semibold">Nigeria</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">
+                        Empowering young people to own their economic success through entrepreneurship education and competitions.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="{% url 'index' %}" class="hover:text-white">Home</a></li>
+                        <li><a href="{% url 'results' %}" class="hover:text-white">Live Results</a></li>
+                        <li><a href="{% url 'login' %}" class="hover:text-white">Admin Login</a></li>
+                        <li><a href="{% url 'judge_login' %}" class="hover:text-white">Judge Login</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <i data-lucide="mail" class="w-4 h-4 mr-2"></i>
+                            admin@janigeria.org
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                            +234 800 000 0000
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                            Lagos, Nigeria
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2026 Junior Achievement Nigeria. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+{% block extra_js %}
+<script>
+    // Load stats from API
+    fetch('/api/dashboard/stats/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.stats) {
+                document.getElementById('stat-competitions').textContent = data.stats.competitions_count || 0;
+                document.getElementById('stat-judges').textContent = data.stats.judges_count || 0;
+                document.getElementById('stat-teams').textContent = data.stats.teams_scored_count || 0;
+            }
+        })
+        .catch(() => {});
+</script>
+{% endblock %}
+{% endblock %}
+

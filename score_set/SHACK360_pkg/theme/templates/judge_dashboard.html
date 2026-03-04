@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Judge Dashboard - JA Nigeria{% endblock %}
+
+{% block content %}
+<div x-data="judgeDashboard()" x-init="init()" class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-ja">JA</span>
+                    <span class="ml-2 text-xl font-semibold text-gray-800">Judge Panel</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600" x-text="'Welcome, ' + (judge?.name || 'Judge')"></span>
+                    <button @click="logout()" class="text-red-600 hover:text-red-700">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Competition Selection -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Select Competition</h2>
+            <select x-model="selectedCompetition" @change="loadTeams()"
+                    class="w-full md:w-96 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ja">
+                <option value="">-- Select a Competition --</option>
+                <template x-for="comp in competitions" :key="comp.id">
+                    <option :value="comp.id" x-text="comp.name + ' (' + comp.date + ')'"></option>
+                </template>
+            </select>
+        </div>
+
+        <!-- Scoring Form -->
+        <div x-show="selectedCompetition" x-cloak class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Submit Score</h2>
+            
+            <form @submit.prevent="submitScore()" class="space-y-6">
+                <!-- Team Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Team</label>
+                    <select x-model="scoreForm.team_name" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ja">
+                        <option value="">-- Select Team --</option>
+                        <template x-for="team in teams" :key="team.id">
+                            <option :value="team.name" x-text="team.name + (team.school_name ? ' - ' + team.school_name : '')"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Scoring Criteria -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Innovation -->
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-blue-800 mb-2">
+                            Innovation (30%)
+                        </label>
+                        <input type="range" x-model="scoreForm.innovation" min="0" max="10" step="0.5"
+                               class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-center mt-2">
+                            <span class="text-3xl font-bold text-ja" x-text="scoreForm.innovation"></span>
+                            <span class="text-gray-500">/10</span>
+                        </div>
+                    </div>
+
+                    <!-- Impact -->
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-green-800 mb-2">
+                            Impact (40%)
+                        </label>
+                        <input type="range" x-model="scoreForm.impact" min="0" max="10" step="0.5"
+                               class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-center mt-2">
+                            <span class="text-3xl font-bold text-green-600" x-text="scoreForm.impact"></span>
+                            <span class="text-green-400">/10</span>
+                        </div>
+                    </div>
+
+                    <!-- Presentation -->
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-purple-800 mb-2">
+                            Presentation (30%)
+                        </label>
+                        <input type="range" x-model="scoreForm.presentation" min="0" max="10" step="0.5"
+                               class="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="text-center mt-2">
+                            <span class="text-3xl font-bold text-purple-600" x-text="scoreForm.presentation"></span>
+                            <span class="text-purple-400">/10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculated Total -->
+                <div class="bg-gray-100 rounded-lg p-6 text-center">
+                    <p class="text-gray-600 mb-2">Calculated Total Score</p>
+                    <p class="text-5xl font-bold text-ja" x-text="calculateTotal().toFixed(1)"></p>
+                    <p class="text-gray-500 mt-1">out of 100</p>
+                </div>
+
+                <!-- Comments -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Comments (Optional)</label>
+                    <textarea x-model="scoreForm.comments" rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ja"
+                              placeholder="Add any notes or feedback for this team..."></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div x-show="submitMessage" :class="submitSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                     class="p-4 rounded-lg" x-text="submitMessage"></div>
+                
+                <button type="submit" :disabled="submitting"
+                        class="w-full bg-ja text-white py-4 px-6 rounded-lg font-semibold hover:bg-ja-dark transition disabled:opacity-50">
+                    <span x-show="!submitting">Submit Score</span>
+                    <span x-show="submitting">Submitting...</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- My Recent Scores -->
+        <div x-show="recentScores.length > 0" x-cloak class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">My Recent Scores</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Innovation</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presentation</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="score in recentScores" :key="score.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap font-medium" x-text="score.team_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="score.innovation_score"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="score.impact_score"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="score.presentation_score"></td>
+                                <td class="px-6 py-4 whitespace-nowrap font-bold text-ja" x-text="score.total_score"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% block extra_js %}
+<script>
+function judgeDashboard() {
+    return {
+        judge: null,
+        competitions: [],
+        selectedCompetition: '',
+        teams: [],
+        recentScores: [],
+        submitting: false,
+        submitMessage: '',
+        submitSuccess: false,
+        scoreForm: {
+            team_name: '',
+            innovation: 5,
+            impact: 5,
+            presentation: 5,
+            comments: ''
+        },
+
+        init() {
+            const stored = sessionStorage.getItem('judge');
+            if (!stored) {
+                window.location.href = '{% url "judge_login" %}';
+                return;
+            }
+            this.judge = JSON.parse(stored);
+            this.loadCompetitions();
+        },
+
+        async loadCompetitions() {
+            try {
+                const res = await fetch('/api/competitions/');
+                const data = await res.json();
+                this.competitions = data.results || data || [];
+            } catch (e) {
+                console.error('Failed to load competitions', e);
+            }
+        },
+
+        async loadTeams() {
+            if (!this.selectedCompetition) {
+                this.teams = [];
+                return;
+            }
+            try {
+                const res = await fetch(`/api/competitions/${this.selectedCompetition}/teams/`);
+                const data = await res.json();
+                this.teams = data.teams || [];
+            } catch (e) {
+                console.error('Failed to load teams', e);
+            }
+        },
+
+        calculateTotal() {
+            return (
+                parseFloat(this.scoreForm.innovation) * 0.30 +
+                parseFloat(this.scoreForm.impact) * 0.40 +
+                parseFloat(this.scoreForm.presentation) * 0.30
+            ) * 10;
+        },
+
+        async submitScore() {
+            if (!this.scoreForm.team_name) {
+                this.submitMessage = 'Please select a team';
+                this.submitSuccess = false;
+                return;
+            }
+
+            this.submitting = true;
+            this.submitMessage = '';
+
+            try {
+                const res = await fetch('/api/scores/submit/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        competition_id: parseInt(this.selectedCompetition),
+                        judge_id: this.judge.id,
+                        team_name: this.scoreForm.team_name,
+                        innovation: parseFloat(this.scoreForm.innovation),
+                        impact: parseFloat(this.scoreForm.impact),
+                        presentation: parseFloat(this.scoreForm.presentation),
+                        comments: this.scoreForm.comments
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    this.submitMessage = `Score submitted! Total: ${data.total_score}`;
+                    this.submitSuccess = true;
+                    this.recentScores.unshift({
+                        team_name: this.scoreForm.team_name,
+                        innovation_score: this.scoreForm.innovation,
+                        impact_score: this.scoreForm.impact,
+                        presentation_score: this.scoreForm.presentation,
+                        total_score: data.total_score
+                    });
+                    // Reset form
+                    this.scoreForm.team_name = '';
+                    this.scoreForm.comments = '';
+                } else {
+                    this.submitMessage = data.error || 'Failed to submit score';
+                    this.submitSuccess = false;
+                }
+            } catch (e) {
+                this.submitMessage = 'Connection error. Please try again.';
+                this.submitSuccess = false;
+            } finally {
+                this.submitting = false;
+            }
+        },
+
+        logout() {
+            sessionStorage.removeItem('judge');
+            window.location.href = '{% url "judge_login" %}';
+        }
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}
+
+

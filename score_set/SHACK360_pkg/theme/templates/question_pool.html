@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Question Pool - JA Nigeria{% endblock %}
+
+{% block content %}
+<div x-data="questionPool()" x-init="init()" class="min-h-screen bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-ja text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'admin_dashboard' %}" class="text-white/80 hover:text-white">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </a>
+                    <span class="text-2xl font-bold">📚 Question Pool</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm">
+                        <span x-text="questions.length"></span> Questions
+                    </span>
+                    <button @click="showAddModal = true" class="bg-white text-ja px-4 py-2 rounded-lg font-medium hover:bg-gray-100">
+                        <i data-lucide="plus" class="w-4 h-4 inline"></i> Add Question
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="text-gray-500 text-sm">Total Questions</div>
+                <div class="text-2xl font-bold text-ja" x-text="questions.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="text-gray-500 text-sm">Easy</div>
+                <div class="text-2xl font-bold text-green-500" x-text="questions.filter(q => q.difficulty === 'easy').length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="text-gray-500 text-sm">Medium</div>
+                <div class="text-2xl font-bold text-yellow-500" x-text="questions.filter(q => q.difficulty === 'medium').length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="text-gray-500 text-sm">Hard</div>
+                <div class="text-2xl font-bold text-red-500" x-text="questions.filter(q => q.difficulty === 'hard').length"></div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow p-4 mb-6">
+            <div class="flex flex-wrap items-center gap-4">
+                <div>
+                    <input type="text" x-model="search" placeholder="Search questions..." 
+                           class="border rounded-lg px-4 py-2 w-64 focus:ring-2 focus:ring-ja focus:border-ja">
+                </div>
+                <div>
+                    <select x-model="filterDifficulty" class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        <option value="">All Difficulties</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div>
+                    <select x-model="filterCategory" class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        <option value="">All Categories</option>
+                        <template x-for="cat in categories" :key="cat">
+                            <option :value="cat" x-text="cat"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <select x-model="filterType" class="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        <option value="">All Types</option>
+                        <option value="mcq">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="short_answer">Short Answer</option>
+                    </select>
+                </div>
+                <button @click="showBulkImport = true" class="ml-auto bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-700">
+                    <i data-lucide="upload" class="w-4 h-4 inline"></i> Bulk Import
+                </button>
+            </div>
+        </div>
+
+        <!-- Questions Table -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Question</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Difficulty</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <template x-for="question in filteredQuestions" :key="question.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm font-mono text-ja" x-text="question.question_number"></td>
+                            <td class="px-4 py-3">
+                                <div class="text-sm font-medium text-gray-900 max-w-md truncate" x-text="question.question_text"></div>
+                                <div x-show="question.question_type === 'mcq'" class="text-xs text-gray-500 mt-1">
+                                    Answer: <span class="font-medium text-green-600" x-text="question.correct_answer"></span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700" x-text="question.type_display"></span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span :class="{
+                                    'bg-green-100 text-green-700': question.difficulty === 'easy',
+                                    'bg-yellow-100 text-yellow-700': question.difficulty === 'medium',
+                                    'bg-red-100 text-red-700': question.difficulty === 'hard'
+                                }" class="px-2 py-1 text-xs rounded-full" x-text="question.difficulty_display"></span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500" x-text="question.category || '-'"></td>
+                            <td class="px-4 py-3">
+                                <div class="text-xs text-gray-500">
+                                    <span x-text="question.times_asked"></span> asked,
+                                    <span class="text-green-600" x-text="question.success_rate + '%'"></span> success
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex space-x-2">
+                                    <button @click="editQuestion(question)" class="text-ja hover:text-ja-dark">
+                                        <i data-lucide="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <button @click="deleteQuestion(question)" class="text-red-500 hover:text-red-700">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="filteredQuestions.length === 0">
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            No questions found. Click "Add Question" to create one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Question Modal -->
+    <div x-show="showAddModal" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4" x-text="editingQuestion ? 'Edit Question' : 'Add New Question'"></h3>
+                <form @submit.prevent="saveQuestion()">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Question Number</label>
+                                <input type="number" x-model="form.question_number" required min="1" max="1000"
+                                       class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Question Type</label>
+                                <select x-model="form.question_type" required
+                                        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                    <option value="mcq">Multiple Choice</option>
+                                    <option value="true_false">True/False</option>
+                                    <option value="short_answer">Short Answer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                            <textarea x-model="form.question_text" required rows="3"
+                                      class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja"></textarea>
+                        </div>
+
+                        <!-- MCQ Options -->
+                        <div x-show="form.question_type === 'mcq'" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Option A</label>
+                                    <input type="text" x-model="form.option_a"
+                                           class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Option B</label>
+                                    <input type="text" x-model="form.option_b"
+                                           class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Option C</label>
+                                    <input type="text" x-model="form.option_c"
+                                           class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Option D</label>
+                                    <input type="text" x-model="form.option_d"
+                                           class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer</label>
+                            <input type="text" x-model="form.correct_answer" required
+                                   :placeholder="form.question_type === 'mcq' ? 'A, B, C, or D' : 'Enter correct answer'"
+                                   class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                                <select x-model="form.difficulty" required
+                                        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <input type="text" x-model="form.category" placeholder="e.g., Science"
+                                       class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                                <input type="number" x-model="form.points" min="1" max="100"
+                                       class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time Limit (seconds)</label>
+                            <input type="number" x-model="form.time_limit" min="10" max="300"
+                                   class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" @click="closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-ja hover:bg-ja-dark text-white rounded-lg">
+                            <span x-text="editingQuestion ? 'Update' : 'Add'"></span> Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Import Modal -->
+    <div x-show="showBulkImport" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4">Bulk Import Questions</h3>
+                <p class="text-gray-600 text-sm mb-4">Paste your questions in JSON format:</p>
+                <textarea x-model="bulkJson" rows="10" placeholder='[{"question_number": 1, "question_text": "...", "question_type": "mcq", "option_a": "...", "option_b": "...", "option_c": "...", "option_d": "...", "correct_answer": "A", "difficulty": "easy", "category": "Science", "points": 10}]'
+                          class="w-full border rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-ja focus:border-ja"></textarea>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button @click="showBulkImport = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button @click="importBulk()" class="px-4 py-2 bg-ja hover:bg-ja-dark text-white rounded-lg">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function questionPool() {
+    return {
+        questions: [],
+        categories: [],
+        search: '',
+        filterDifficulty: '',
+        filterCategory: '',
+        filterType: '',
+        
+        showAddModal: false,
+        showBulkImport: false,
+        editingQuestion: null,
+        bulkJson: '',
+        
+        form: {
+            question_number: '',
+            question_text: '',
+            question_type: 'mcq',
+            option_a: '',
+            option_b: '',
+            option_c: '',
+            option_d: '',
+            correct_answer: '',
+            difficulty: 'medium',
+            category: '',
+            points: 10,
+            time_limit: 30
+        },
+
+        async init() {
+            await this.loadQuestions();
+            await this.loadCategories();
+            this.$nextTick(() => lucide.createIcons());
+        },
+
+        async loadQuestions() {
+            try {
+                const response = await fetch('/api/quiz/questions/');
+                this.questions = await response.json();
+            } catch (e) {
+                console.error('Failed to load questions:', e);
+            }
+        },
+
+        async loadCategories() {
+            try {
+                const response = await fetch('/api/quiz/questions/categories/');
+                const data = await response.json();
+                this.categories = data.categories || [];
+            } catch (e) {
+                console.error('Failed to load categories:', e);
+            }
+        },
+
+        get filteredQuestions() {
+            return this.questions.filter(q => {
+                if (this.search && !q.question_text.toLowerCase().includes(this.search.toLowerCase())) return false;
+                if (this.filterDifficulty && q.difficulty !== this.filterDifficulty) return false;
+                if (this.filterCategory && q.category !== this.filterCategory) return false;
+                if (this.filterType && q.question_type !== this.filterType) return false;
+                return true;
+            });
+        },
+
+        editQuestion(question) {
+            this.editingQuestion = question;
+            this.form = { ...question };
+            this.showAddModal = true;
+        },
+
+        async saveQuestion() {
+            try {
+                const url = this.editingQuestion 
+                    ? `/api/quiz/questions/${this.editingQuestion.id}/` 
+                    : '/api/quiz/questions/';
+                const method = this.editingQuestion ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(this.form)
+                });
+                
+                if (response.ok) {
+                    await this.loadQuestions();
+                    await this.loadCategories();
+                    this.closeModal();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + JSON.stringify(error));
+                }
+            } catch (e) {
+                console.error('Error saving question:', e);
+            }
+        },
+
+        async deleteQuestion(question) {
+            if (!confirm(`Delete question #${question.question_number}?`)) return;
+            
+            try {
+                await fetch(`/api/quiz/questions/${question.id}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                await this.loadQuestions();
+            } catch (e) {
+                console.error('Error deleting question:', e);
+            }
+        },
+
+        async importBulk() {
+            try {
+                const questions = JSON.parse(this.bulkJson);
+                const response = await fetch('/api/quiz/questions/bulk_create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ questions })
+                });
+                
+                const result = await response.json();
+                alert(`Imported ${result.created} questions`);
+                this.showBulkImport = false;
+                this.bulkJson = '';
+                await this.loadQuestions();
+                await this.loadCategories();
+            } catch (e) {
+                alert('Invalid JSON format');
+            }
+        },
+
+        closeModal() {
+            this.showAddModal = false;
+            this.editingQuestion = null;
+            this.form = {
+                question_number: '',
+                question_text: '',
+                question_type: 'mcq',
+                option_a: '',
+                option_b: '',
+                option_c: '',
+                option_d: '',
+                correct_answer: '',
+                difficulty: 'medium',
+                category: '',
+                points: 10,
+                time_limit: 30
+            };
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+}
+</script>
+{% endblock %}

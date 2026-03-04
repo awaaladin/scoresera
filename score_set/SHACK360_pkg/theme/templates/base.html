@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Junior Achievement Nigeria{% endblock %}</title>
+    <meta name="description" content="{% block description %}Competition Scoring System for Junior Achievement Nigeria{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ja: {
+                            DEFAULT: '#285F74',
+                            50: '#e8f4f8',
+                            100: '#c5e3ec',
+                            200: '#9fd1e0',
+                            300: '#79bed3',
+                            400: '#5cafc9',
+                            500: '#3f9fbf',
+                            600: '#285F74',
+                            700: '#1f4a5b',
+                            800: '#163542',
+                            900: '#0d2029',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+        .sidebar-link.active {
+            background-color: #285F74;
+            color: white;
+        }
+        .bg-ja { background-color: #285F74; }
+        .bg-ja-dark { background-color: #1f4a5b; }
+        .bg-ja-light { background-color: #3a7a91; }
+        .text-ja { color: #285F74; }
+        .text-ja-light { color: #5cafc9; }
+        .border-ja { border-color: #285F74; }
+        .hover\:bg-ja-dark:hover { background-color: #1f4a5b; }
+        .hover\:text-ja:hover { color: #285F74; }
+        .focus\:ring-ja:focus { --tw-ring-color: #285F74; }
+        .focus\:border-ja:focus { border-color: #285F74; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    {% block content %}{% endblock %}
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        // Initialize Lucide icons after Alpine.js renders
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+        
+        // Re-initialize icons when Alpine updates the DOM
+        document.addEventListener('alpine:initialized', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+        
+        // Watch for Alpine DOM changes and reinitialize icons
+        if (typeof MutationObserver !== 'undefined') {
+            const observer = new MutationObserver(function(mutations) {
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                observer.observe(document.body, { childList: true, subtree: true });
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz Master Login - JA Nigeria{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-ja to-ja-dark flex items-center justify-center px-4">
+    <div class="max-w-md w-full" x-data="quizMasterLogin()">
+        <!-- Logo & Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
+                <span class="text-4xl">🎯</span>
+            </div>
+            <h1 class="text-3xl font-bold text-white">Quiz Master Portal</h1>
+            <p class="text-white/80 mt-2">Enter your PIN to access the dashboard</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <form @submit.prevent="login()">
+                <div class="space-y-6">
+                    <!-- PIN Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quiz Master PIN</label>
+                        <div class="flex justify-center space-x-3">
+                            <template x-for="(digit, index) in pinDigits" :key="index">
+                                <input type="text" 
+                                       maxlength="1"
+                                       x-model="pinDigits[index]"
+                                       @input="handlePinInput($event, index)"
+                                       @keydown.backspace="handleBackspace($event, index)"
+                                       @paste="handlePaste($event)"
+                                       :data-index="index"
+                                       class="w-12 h-14 text-center text-2xl font-bold border-2 rounded-lg focus:border-ja focus:ring-2 focus:ring-ja transition-colors"
+                                       :class="digit ? 'border-ja bg-ja/5' : 'border-gray-300'">
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div x-show="error" x-transition class="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center">
+                        <i data-lucide="alert-circle" class="w-4 h-4 inline"></i>
+                        <span x-text="error"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            :disabled="loading || pinDigits.some(d => !d)"
+                            class="w-full bg-ja hover:bg-ja-dark text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!loading">Access Dashboard</span>
+                        <span x-show="loading" class="flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Verifying...
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Footer Links -->
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <a href="{% url 'index' %}" class="text-ja hover:text-ja-dark">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Contestant Link -->
+        <div class="text-center mt-6">
+            <p class="text-white/80">
+                Are you a contestant? 
+                <a href="{% url 'contestant_login' %}" class="text-white font-medium underline">Join Quiz Here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function quizMasterLogin() {
+    return {
+        pinDigits: ['', '', '', '', '', ''],
+        loading: false,
+        error: '',
+
+        handlePinInput(event, index) {
+            const value = event.target.value;
+            if (value && /^\d$/.test(value)) {
+                this.pinDigits[index] = value;
+                // Move to next input
+                if (index < 5) {
+                    const nextInput = document.querySelector(`[data-index="${index + 1}"]`);
+                    if (nextInput) nextInput.focus();
+                }
+            } else {
+                this.pinDigits[index] = '';
+            }
+        },
+
+        handleBackspace(event, index) {
+            if (!this.pinDigits[index] && index > 0) {
+                const prevInput = document.querySelector(`[data-index="${index - 1}"]`);
+                if (prevInput) {
+                    prevInput.focus();
+                    this.pinDigits[index - 1] = '';
+                }
+            }
+        },
+
+        handlePaste(event) {
+            event.preventDefault();
+            const pastedData = (event.clipboardData || window.clipboardData).getData('text');
+            const digits = pastedData.replace(/\D/g, '').slice(0, 6).split('');
+            digits.forEach((digit, index) => {
+                if (index < 6) this.pinDigits[index] = digit;
+            });
+        },
+
+        async login() {
+            const pin = this.pinDigits.join('');
+            if (pin.length !== 6) {
+                this.error = 'Please enter a 6-digit PIN';
+                return;
+            }
+
+            this.loading = true;
+            this.error = '';
+
+            try {
+                const response = await fetch('/api/quiz/masters/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ pin })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    localStorage.setItem('quizMaster', JSON.stringify(data.quiz_master));
+                    window.location.href = '/quiz/dashboard/';
+                } else {
+                    this.error = data.error || 'Invalid PIN';
+                    this.pinDigits = ['', '', '', '', '', ''];
+                    document.querySelector('[data-index="0"]').focus();
+                }
+            } catch (e) {
+                this.error = 'Connection error. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+}
+</script>
+{% endblock %}

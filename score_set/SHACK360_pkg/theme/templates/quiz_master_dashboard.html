@@ -1,0 +1,836 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quiz Master Dashboard - JA Nigeria{% endblock %}
+
+{% block content %}
+<div x-data="quizMasterDashboard()" x-init="init()" class="min-h-screen bg-gray-100">
+    <!-- Top Navigation -->
+    <nav class="bg-ja text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <span class="text-2xl font-bold">🎯 QuizMaster</span>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm" x-text="quizMaster?.name || 'Loading...'"></span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Network Status -->
+                    <div class="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-lg">
+                        <span class="text-xs">Network:</span>
+                        <span :class="{
+                            'bg-green-400': networkStatus === 'good',
+                            'bg-yellow-400': networkStatus === 'fair',
+                            'bg-red-400': networkStatus === 'poor'
+                        }" class="w-3 h-3 rounded-full"></span>
+                        <span class="text-xs" x-text="ping + 'ms'"></span>
+                    </div>
+                    <button @click="logout()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm">
+                        <i data-lucide="log-out" class="w-4 h-4 inline"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Session Controls -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">
+                    <i data-lucide="gamepad-2" class="w-6 h-6 inline text-ja"></i>
+                    Live Quiz Session
+                </h2>
+                <div class="flex items-center space-x-3">
+                    <span :class="{
+                        'bg-gray-100 text-gray-600': !session,
+                        'bg-yellow-100 text-yellow-700': session?.status === 'waiting',
+                        'bg-green-100 text-green-700': session?.status === 'live',
+                        'bg-orange-100 text-orange-700': session?.status === 'paused',
+                        'bg-blue-100 text-blue-700': session?.status === 'completed'
+                    }" class="px-4 py-2 rounded-full font-medium" x-text="session?.status_display || 'No Session'"></span>
+                </div>
+            </div>
+
+            <!-- No Active Session -->
+            <template x-if="!session">
+                <div class="text-center py-12">
+                    <i data-lucide="play-circle" class="w-16 h-16 mx-auto text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 mb-4">No active quiz session</p>
+                    <button @click="showCreateSession = true" class="bg-ja hover:bg-ja-dark text-white px-6 py-3 rounded-lg font-medium">
+                        <i data-lucide="plus" class="w-5 h-5 inline"></i> Create New Session
+                    </button>
+                </div>
+            </template>
+
+            <!-- Active Session -->
+            <template x-if="session">
+                <div>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <!-- Session Info -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Session Info</h3>
+                            <div class="space-y-2 text-sm">
+                                <p><span class="text-gray-500">Title:</span> <span class="font-medium" x-text="session.title"></span></p>
+                                <p><span class="text-gray-500">Room ID:</span> <span class="font-mono text-ja" x-text="session.room_id"></span></p>
+                                <p><span class="text-gray-500">Mode:</span> <span x-text="session.mode_display"></span></p>
+                                <p><span class="text-gray-500">Questions:</span> <span x-text="currentQuestionNumber + '/' + session.total_questions"></span></p>
+                            </div>
+                        </div>
+
+                        <!-- Contestants -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Contestants (<span x-text="session.contestants_list?.length || 0"></span>)</h3>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                <template x-for="c in session.contestants_list || []" :key="c.id">
+                                    <div class="flex items-center justify-between bg-white p-2 rounded">
+                                        <span class="text-sm font-medium" x-text="c.name"></span>
+                                        <span :class="c.is_verified ? 'text-green-500' : 'text-gray-400'">
+                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                        </span>
+                                    </div>
+                                </template>
+                                <p x-show="!session.contestants_list?.length" class="text-gray-400 text-sm">Waiting for contestants...</p>
+                            </div>
+                        </div>
+
+                        <!-- Session Controls -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Controls</h3>
+                            <div class="space-y-2">
+                                <button x-show="session.status === 'waiting' || session.status === 'scheduled'" 
+                                        @click="startSession()" 
+                                        class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium">
+                                    <i data-lucide="play" class="w-4 h-4 inline"></i> Start Quiz
+                                </button>
+                                <button x-show="session.status === 'live'" 
+                                        @click="pauseSession()" 
+                                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium">
+                                    <i data-lucide="pause" class="w-4 h-4 inline"></i> Pause
+                                </button>
+                                <button x-show="session.status === 'paused'" 
+                                        @click="resumeSession()" 
+                                        class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium">
+                                    <i data-lucide="play" class="w-4 h-4 inline"></i> Resume
+                                </button>
+                                <button x-show="session.status === 'live' || session.status === 'paused'" 
+                                        @click="endSession()" 
+                                        class="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium">
+                                    <i data-lucide="square" class="w-4 h-4 inline"></i> End Quiz
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid lg:grid-cols-3 gap-6" x-show="session">
+            <!-- Left Column: Video & Question -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Live Video Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <i data-lucide="video" class="w-5 h-5 inline text-ja"></i> Live Video Feed
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Quiz Master Video -->
+                        <div class="relative">
+                            <div class="bg-gray-900 rounded-lg aspect-video flex items-center justify-center">
+                                <video id="localVideo" autoplay muted playsinline class="w-full h-full rounded-lg object-cover"></video>
+                                <div x-show="!localStream" class="absolute inset-0 flex items-center justify-center">
+                                    <i data-lucide="video-off" class="w-12 h-12 text-gray-500"></i>
+                                </div>
+                            </div>
+                            <span class="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">You (Quiz Master)</span>
+                        </div>
+                        <!-- Contestant Video -->
+                        <div class="relative">
+                            <div class="bg-gray-900 rounded-lg aspect-video flex items-center justify-center">
+                                <video id="remoteVideo" autoplay playsinline class="w-full h-full rounded-lg object-cover"></video>
+                                <div x-show="!remoteStream" class="absolute inset-0 flex items-center justify-center">
+                                    <i data-lucide="user" class="w-12 h-12 text-gray-500"></i>
+                                </div>
+                            </div>
+                            <span class="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs" x-text="activeContestant?.name || 'Contestant'"></span>
+                            <!-- Network indicator on video -->
+                            <div class="absolute top-2 right-2 flex items-center space-x-1 bg-black/60 px-2 py-1 rounded">
+                                <span :class="{
+                                    'bg-green-400': contestantNetwork === 'good',
+                                    'bg-yellow-400': contestantNetwork === 'fair',
+                                    'bg-red-400': contestantNetwork === 'poor'
+                                }" class="w-2 h-2 rounded-full"></span>
+                                <span class="text-white text-xs" x-text="contestantPing + 'ms'"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center space-x-4 mt-4">
+                        <button @click="toggleCamera()" :class="cameraOn ? 'bg-ja' : 'bg-red-500'" class="text-white p-3 rounded-lg">
+                            <i :data-lucide="cameraOn ? 'video' : 'video-off'" class="w-5 h-5"></i>
+                        </button>
+                        <button @click="toggleMic()" :class="micOn ? 'bg-ja' : 'bg-red-500'" class="text-white p-3 rounded-lg">
+                            <i :data-lucide="micOn ? 'mic' : 'mic-off'" class="w-5 h-5"></i>
+                        </button>
+                        <button @click="toggleRecording()" :class="isRecording ? 'bg-red-500' : 'bg-gray-500'" class="text-white p-3 rounded-lg">
+                            <i data-lucide="circle" class="w-5 h-5" :class="isRecording && 'text-red-200 animate-pulse'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Question Panel -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">
+                            <i data-lucide="help-circle" class="w-5 h-5 inline text-ja"></i> Current Question
+                        </h3>
+                        <button @click="nextQuestion()" 
+                                :disabled="session?.status !== 'live'"
+                                class="bg-ja hover:bg-ja-dark text-white px-4 py-2 rounded-lg disabled:opacity-50">
+                            <i data-lucide="skip-forward" class="w-4 h-4 inline"></i> Next Question
+                        </button>
+                    </div>
+
+                    <template x-if="currentQuestion">
+                        <div>
+                            <!-- Timer -->
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm text-gray-500">Time Remaining</span>
+                                    <span class="text-2xl font-bold" :class="timer <= 10 ? 'text-red-500' : 'text-ja'" x-text="timer + 's'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="h-3 rounded-full transition-all duration-1000"
+                                         :class="timer <= 10 ? 'bg-red-500' : 'bg-ja'"
+                                         :style="'width: ' + (timer / currentQuestion.time_limit * 100) + '%'"></div>
+                                </div>
+                            </div>
+
+                            <!-- Question Display -->
+                            <div class="bg-gradient-to-br from-ja to-ja-dark text-white rounded-xl p-6 mb-4">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="bg-white/20 px-3 py-1 rounded-full text-sm">
+                                        Q<span x-text="currentQuestion.question_number"></span>
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <span class="bg-white/20 px-2 py-1 rounded text-xs" x-text="currentQuestion.difficulty_display"></span>
+                                        <span class="bg-white/20 px-2 py-1 rounded text-xs" x-text="currentQuestion.points + ' pts'"></span>
+                                    </div>
+                                </div>
+                                <p class="text-xl font-medium" x-text="currentQuestion.question_text"></p>
+                            </div>
+
+                            <!-- MCQ Options -->
+                            <div x-show="currentQuestion.question_type === 'mcq'" class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-50 p-3 rounded-lg border-2 border-transparent hover:border-ja">
+                                    <span class="font-bold text-ja">A.</span> <span x-text="currentQuestion.option_a"></span>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border-2 border-transparent hover:border-ja">
+                                    <span class="font-bold text-ja">B.</span> <span x-text="currentQuestion.option_b"></span>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border-2 border-transparent hover:border-ja">
+                                    <span class="font-bold text-ja">C.</span> <span x-text="currentQuestion.option_c"></span>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-lg border-2 border-transparent hover:border-ja">
+                                    <span class="font-bold text-ja">D.</span> <span x-text="currentQuestion.option_d"></span>
+                                </div>
+                            </div>
+
+                            <!-- Correct Answer (visible to Quiz Master) -->
+                            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <span class="text-sm text-green-600">Correct Answer:</span>
+                                <span class="font-bold text-green-700 ml-2" x-text="currentQuestion.correct_answer"></span>
+                            </div>
+
+                            <!-- Timer Controls -->
+                            <div class="flex justify-center space-x-4 mt-4">
+                                <button @click="adjustTimer(-5)" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">-5s</button>
+                                <button @click="pauseTimer()" class="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-lg">
+                                    <i :data-lucide="timerPaused ? 'play' : 'pause'" class="w-4 h-4 inline"></i>
+                                </button>
+                                <button @click="adjustTimer(5)" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">+5s</button>
+                                <button @click="adjustTimer(30)" class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg">+30s</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="!currentQuestion">
+                        <div class="text-center py-12 text-gray-400">
+                            <i data-lucide="file-question" class="w-16 h-16 mx-auto mb-4"></i>
+                            <p>No question loaded. Click "Next Question" to load.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Right Column: Alerts & Scores -->
+            <div class="space-y-6">
+                <!-- Proctor Alerts -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 inline text-red-500"></i> Proctor Alerts
+                        </h3>
+                        <span class="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-medium" x-text="alerts.length"></span>
+                    </div>
+                    <div class="space-y-3 max-h-64 overflow-y-auto">
+                        <template x-for="alert in alerts" :key="alert.id">
+                            <div :class="{
+                                'border-red-300 bg-red-50': alert.severity === 'critical' || alert.severity === 'high',
+                                'border-yellow-300 bg-yellow-50': alert.severity === 'medium',
+                                'border-gray-300 bg-gray-50': alert.severity === 'low'
+                            }" class="border-l-4 p-3 rounded-r">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="font-medium text-sm" x-text="alert.alert_type_display"></span>
+                                        <p class="text-xs text-gray-500" x-text="alert.contestant_name"></p>
+                                    </div>
+                                    <button @click="reviewAlert(alert)" class="text-ja hover:text-ja-dark text-xs">Review</button>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1" x-text="alert.description"></p>
+                            </div>
+                        </template>
+                        <p x-show="alerts.length === 0" class="text-gray-400 text-sm text-center py-4">No alerts</p>
+                    </div>
+                </div>
+
+                <!-- Live Leaderboard -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <i data-lucide="trophy" class="w-5 h-5 inline text-yellow-500"></i> Live Leaderboard
+                    </h3>
+                    <div class="space-y-2">
+                        <template x-for="(score, index) in leaderboard" :key="score.contestant_name">
+                            <div class="flex items-center p-2 rounded-lg" :class="index === 0 ? 'bg-yellow-50' : 'bg-gray-50'">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm"
+                                      :class="{
+                                          'bg-yellow-400 text-white': index === 0,
+                                          'bg-gray-300 text-gray-700': index === 1,
+                                          'bg-orange-300 text-white': index === 2,
+                                          'bg-gray-200 text-gray-600': index > 2
+                                      }" x-text="index + 1"></span>
+                                <span class="flex-1 ml-3 font-medium text-sm" x-text="score.contestant_name"></span>
+                                <span class="font-bold text-ja" x-text="score.final_score"></span>
+                            </div>
+                        </template>
+                        <p x-show="leaderboard.length === 0" class="text-gray-400 text-sm text-center py-4">No scores yet</p>
+                    </div>
+                </div>
+
+                <!-- Network Status -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">
+                        <i data-lucide="wifi" class="w-5 h-5 inline text-ja"></i> Network Status
+                    </h3>
+                    <div class="space-y-3">
+                        <template x-for="c in session?.contestants_list || []" :key="c.id">
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <span class="text-sm font-medium" x-text="c.name"></span>
+                                <div class="flex items-center space-x-2">
+                                    <span :class="{
+                                        'bg-green-400': getContestantNetworkStatus(c.id) === 'good',
+                                        'bg-yellow-400': getContestantNetworkStatus(c.id) === 'fair',
+                                        'bg-red-400': getContestantNetworkStatus(c.id) === 'poor'
+                                    }" class="w-3 h-3 rounded-full"></span>
+                                    <span class="text-xs text-gray-500" x-text="getContestantPing(c.id) + 'ms'"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Session Modal -->
+    <div x-show="showCreateSession" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
+            <h3 class="text-xl font-bold mb-4">Create New Quiz Session</h3>
+            <form @submit.prevent="createSession()">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Session Title</label>
+                        <input type="text" x-model="newSession.title" required
+                               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja"
+                               placeholder="e.g., JA Quiz Competition 2026">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Total Questions</label>
+                            <input type="number" x-model="newSession.total_questions" min="1" max="100"
+                                   class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time per Question (s)</label>
+                            <input type="number" x-model="newSession.default_time_per_question" min="10" max="120"
+                                   class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Category Filter</label>
+                            <select x-model="newSession.category_filter"
+                                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                <option value="">All Categories</option>
+                                <template x-for="cat in categories" :key="cat">
+                                    <option :value="cat" x-text="cat"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                            <select x-model="newSession.difficulty_filter"
+                                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                                <option value="">All Difficulties</option>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Proctoring Settings</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" x-model="newSession.movement_detection" class="rounded text-ja focus:ring-ja">
+                                <span class="text-sm">Movement Detection</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" x-model="newSession.voice_detection" class="rounded text-ja focus:ring-ja">
+                                <span class="text-sm">Voice Detection</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" x-model="newSession.fullscreen_required" class="rounded text-ja focus:ring-ja">
+                                <span class="text-sm">Fullscreen Required</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" x-model="newSession.tab_switch_detection" class="rounded text-ja focus:ring-ja">
+                                <span class="text-sm">Tab Switch Detection</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Warnings Before Disqualification</label>
+                        <input type="number" x-model="newSession.max_warnings" min="1" max="10"
+                               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" @click="showCreateSession = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-ja hover:bg-ja-dark text-white rounded-lg">Create Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Review Modal -->
+    <div x-show="showAlertReview" x-transition class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <h3 class="text-xl font-bold mb-4">Review Alert</h3>
+            <template x-if="selectedAlert">
+                <div>
+                    <div class="space-y-3 mb-4">
+                        <p><span class="text-gray-500">Type:</span> <span class="font-medium" x-text="selectedAlert.alert_type_display"></span></p>
+                        <p><span class="text-gray-500">Contestant:</span> <span class="font-medium" x-text="selectedAlert.contestant_name"></span></p>
+                        <p><span class="text-gray-500">Severity:</span> <span class="font-medium" x-text="selectedAlert.severity_display"></span></p>
+                        <p><span class="text-gray-500">Description:</span> <span x-text="selectedAlert.description"></span></p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
+                        <textarea x-model="alertReviewNotes" rows="3"
+                                  class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-ja focus:border-ja"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button @click="showAlertReview = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button @click="markFalsePositive()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">False Positive</button>
+                        <button @click="confirmAlert()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg">Confirm Alert</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+function quizMasterDashboard() {
+    return {
+        quizMaster: null,
+        session: null,
+        currentQuestion: null,
+        currentQuestionNumber: 0,
+        timer: 30,
+        timerInterval: null,
+        timerPaused: false,
+        alerts: [],
+        leaderboard: [],
+        categories: [],
+        
+        // Video
+        localStream: null,
+        remoteStream: null,
+        cameraOn: true,
+        micOn: true,
+        isRecording: false,
+        
+        // Network
+        ping: 0,
+        networkStatus: 'good',
+        contestantPing: 0,
+        contestantNetwork: 'good',
+        contestantNetworks: {},
+        
+        // Modals
+        showCreateSession: false,
+        showAlertReview: false,
+        selectedAlert: null,
+        alertReviewNotes: '',
+        
+        // New session form
+        newSession: {
+            title: '',
+            total_questions: 10,
+            default_time_per_question: 30,
+            category_filter: '',
+            difficulty_filter: '',
+            movement_detection: true,
+            voice_detection: true,
+            fullscreen_required: true,
+            tab_switch_detection: true,
+            max_warnings: 3
+        },
+
+        async init() {
+            // Check if quiz master is logged in
+            const qmData = localStorage.getItem('quizMaster');
+            if (!qmData) {
+                window.location.href = '/quiz/';
+                return;
+            }
+            this.quizMaster = JSON.parse(qmData);
+            
+            // Load categories
+            await this.loadCategories();
+            
+            // Start video
+            await this.startVideo();
+            
+            // Start network monitoring
+            this.monitorNetwork();
+            
+            // Poll for updates
+            setInterval(() => this.pollUpdates(), 3000);
+            
+            // Reinit Lucide icons
+            this.$nextTick(() => lucide.createIcons());
+        },
+
+        async loadCategories() {
+            try {
+                const response = await fetch('/api/quiz/questions/categories/');
+                const data = await response.json();
+                this.categories = data.categories || [];
+            } catch (e) {
+                console.error('Failed to load categories:', e);
+            }
+        },
+
+        async startVideo() {
+            try {
+                this.localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                document.getElementById('localVideo').srcObject = this.localStream;
+            } catch (e) {
+                console.error('Failed to start video:', e);
+            }
+        },
+
+        toggleCamera() {
+            if (this.localStream) {
+                const videoTrack = this.localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    this.cameraOn = videoTrack.enabled;
+                }
+            }
+        },
+
+        toggleMic() {
+            if (this.localStream) {
+                const audioTrack = this.localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    this.micOn = audioTrack.enabled;
+                }
+            }
+        },
+
+        toggleRecording() {
+            this.isRecording = !this.isRecording;
+            // TODO: Implement actual recording
+        },
+
+        monitorNetwork() {
+            setInterval(() => {
+                // Simulate network monitoring
+                const start = performance.now();
+                fetch('/api/quiz/questions/?limit=1', { method: 'HEAD' })
+                    .then(() => {
+                        this.ping = Math.round(performance.now() - start);
+                        this.networkStatus = this.ping < 50 ? 'good' : this.ping < 120 ? 'fair' : 'poor';
+                    })
+                    .catch(() => {
+                        this.networkStatus = 'poor';
+                        this.ping = 999;
+                    });
+            }, 5000);
+        },
+
+        async createSession() {
+            try {
+                const response = await fetch('/api/quiz/sessions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        ...this.newSession,
+                        quiz_master: this.quizMaster.id
+                    })
+                });
+                
+                if (response.ok) {
+                    this.session = await response.json();
+                    this.showCreateSession = false;
+                    this.$nextTick(() => lucide.createIcons());
+                } else {
+                    alert('Failed to create session');
+                }
+            } catch (e) {
+                console.error('Error creating session:', e);
+            }
+        },
+
+        async startSession() {
+            if (!this.session) return;
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/start/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.session = data.session;
+                    await this.nextQuestion();
+                }
+            } catch (e) {
+                console.error('Error starting session:', e);
+            }
+        },
+
+        async pauseSession() {
+            if (!this.session) return;
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/pause/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (response.ok) {
+                    this.session.status = 'paused';
+                    this.session.status_display = 'Paused';
+                    this.pauseTimer();
+                }
+            } catch (e) {
+                console.error('Error pausing session:', e);
+            }
+        },
+
+        async resumeSession() {
+            if (!this.session) return;
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/resume/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (response.ok) {
+                    this.session.status = 'live';
+                    this.session.status_display = 'Live';
+                    this.pauseTimer(); // Toggle back on
+                }
+            } catch (e) {
+                console.error('Error resuming session:', e);
+            }
+        },
+
+        async endSession() {
+            if (!this.session || !confirm('Are you sure you want to end this quiz session?')) return;
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/end/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': this.getCookie('csrftoken') }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.session = data.session;
+                    this.stopTimer();
+                    await this.loadLeaderboard();
+                }
+            } catch (e) {
+                console.error('Error ending session:', e);
+            }
+        },
+
+        async nextQuestion() {
+            if (!this.session) return;
+            this.stopTimer();
+            
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/next_question/`);
+                const data = await response.json();
+                
+                if (data.completed) {
+                    alert('All questions completed!');
+                    return;
+                }
+                
+                this.currentQuestion = data.question;
+                this.currentQuestionNumber = data.question_number;
+                this.timer = this.currentQuestion.time_limit;
+                this.startTimer();
+                this.$nextTick(() => lucide.createIcons());
+            } catch (e) {
+                console.error('Error getting next question:', e);
+            }
+        },
+
+        startTimer() {
+            this.timerPaused = false;
+            this.timerInterval = setInterval(() => {
+                if (!this.timerPaused && this.timer > 0) {
+                    this.timer--;
+                }
+                if (this.timer === 0) {
+                    this.stopTimer();
+                    // Auto-submit timeout for all contestants
+                }
+            }, 1000);
+        },
+
+        stopTimer() {
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+        },
+
+        pauseTimer() {
+            this.timerPaused = !this.timerPaused;
+        },
+
+        adjustTimer(seconds) {
+            this.timer = Math.max(0, this.timer + seconds);
+        },
+
+        async pollUpdates() {
+            if (!this.session) return;
+            
+            // Load alerts
+            try {
+                const alertsRes = await fetch(`/api/quiz/sessions/${this.session.id}/alerts/`);
+                const alertsData = await alertsRes.json();
+                this.alerts = (alertsData.alerts || []).filter(a => !a.is_reviewed);
+            } catch (e) {}
+            
+            // Load leaderboard
+            await this.loadLeaderboard();
+        },
+
+        async loadLeaderboard() {
+            if (!this.session) return;
+            try {
+                const response = await fetch(`/api/quiz/sessions/${this.session.id}/leaderboard/`);
+                const data = await response.json();
+                this.leaderboard = data.leaderboard || [];
+            } catch (e) {}
+        },
+
+        reviewAlert(alert) {
+            this.selectedAlert = alert;
+            this.alertReviewNotes = '';
+            this.showAlertReview = true;
+        },
+
+        async markFalsePositive() {
+            if (!this.selectedAlert) return;
+            try {
+                await fetch(`/api/quiz/alerts/${this.selectedAlert.id}/review/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        notes: this.alertReviewNotes,
+                        false_positive: true
+                    })
+                });
+                this.showAlertReview = false;
+                this.alerts = this.alerts.filter(a => a.id !== this.selectedAlert.id);
+            } catch (e) {
+                console.error('Error reviewing alert:', e);
+            }
+        },
+
+        async confirmAlert() {
+            if (!this.selectedAlert) return;
+            try {
+                await fetch(`/api/quiz/alerts/${this.selectedAlert.id}/review/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        notes: this.alertReviewNotes,
+                        false_positive: false
+                    })
+                });
+                this.showAlertReview = false;
+                this.alerts = this.alerts.filter(a => a.id !== this.selectedAlert.id);
+            } catch (e) {
+                console.error('Error reviewing alert:', e);
+            }
+        },
+
+        getContestantNetworkStatus(id) {
+            return this.contestantNetworks[id]?.status || 'good';
+        },
+
+        getContestantPing(id) {
+            return this.contestantNetworks[id]?.ping || 0;
+        },
+
+        logout() {
+            localStorage.removeItem('quizMaster');
+            window.location.href = '/quiz/';
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    };
+}
+</script>
+{% endblock %}

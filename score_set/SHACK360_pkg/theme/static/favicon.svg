@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- JA Nigeria Logo - Two overlapping chevrons -->
+  <rect width="32" height="32" fill="white"/>
+  <!-- Back chevron (lighter) -->
+  <path d="M6 22 L16 6 L26 22 L16 14 Z" fill="#3a8fa8"/>
+  <!-- Front chevron (darker) -->
+  <path d="M10 26 L20 10 L30 26 L20 18 Z" fill="#285F74"/>
+</svg>
