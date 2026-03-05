@@ -956,23 +956,26 @@ function adminDashboard() {
         },
 
         selectPortal(portal) {
+            console.log('Selecting portal:', portal);
             this.activePortal = portal;
             this.currentPage = portal === 'cp' ? 'cp_dashboard' : 'qp_dashboard';
-            this.$nextTick(() => lucide.createIcons());
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
         },
 
-        async init() {
-            await Promise.all([
-                this.loadStats(),
-                this.loadCompetitions(),
-                this.loadJudges(),
-                this.loadTeams(),
-                this.loadAnalytics(),
-                this.loadQuizMasters(),
-                this.loadContestants(),
-                this.loadQuizSessions(),
-                this.loadQuestionCount()
-            ]);
+        init() {
+            console.log('Admin dashboard initialized');
+            // Load data in background, don't block UI
+            this.loadStats();
+            this.loadCompetitions();
+            this.loadJudges();
+            this.loadTeams();
+            this.loadAnalytics();
+            this.loadQuizMasters();
+            this.loadContestants();
+            this.loadQuizSessions();
+            this.loadQuestionCount();
         },
 
         async loadStats() {

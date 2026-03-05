@@ -222,22 +222,8 @@ MASTER_KEY = os.environ.get('MASTER_KEY', '')
 
 # Content Security Policy and related header defaults. Adjust in environment as needed.
 # By default allow self and required CDNs used by the frontend (fonts.googleapis and tailwind CDN).
-_csp_script_src = ["'self'", 'https://cdn.tailwindcss.com']
-_csp_style_src = ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"]
-_csp_font_src = ["'self'", 'https://fonts.gstatic.com', 'data:']
-_csp_img_src = ["'self'", 'data:']
-_csp_connect_src = ["'self'", 'https://*']
-
-CSP_HEADER = os.environ.get('CSP_HEADER') or (
-    ' '.join([
-        "default-src 'self';",
-        'script-src ' + ' '.join(_csp_script_src) + ';',
-        'style-src ' + ' '.join(_csp_style_src) + ';',
-        'font-src ' + ' '.join(_csp_font_src) + ';',
-        'img-src ' + ' '.join(_csp_img_src) + ';',
-        'connect-src ' + ' '.join(_csp_connect_src) + ';',
-    ])
-)
+# CSP disabled for development - enable in production
+CSP_HEADER = None
 
 REFERRER_POLICY = os.environ.get('REFERRER_POLICY', 'same-origin')
 PERMISSIONS_POLICY = os.environ.get('PERMISSIONS_POLICY', "geolocation=(), microphone=()")
@@ -249,6 +235,3 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'theme' / 'static',
 ]
-
-# Allow CSP to include unpkg.com for lucide icons and Alpinejs
-_csp_script_src.extend(['https://unpkg.com', 'https://cdn.jsdelivr.net', "'unsafe-inline'"])

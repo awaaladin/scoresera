@@ -17,8 +17,8 @@
                 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="{% url 'results' %}" class="text-gray-600 hover:text-ja px-3 py-2">Live Results</a>
-                    <a href="{% url 'login' %}" class="bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark transition" style="background-color: #285F74;">
+                    <a href="{% url 'results' %}" style="cursor: pointer !important;" class="cursor-pointer text-gray-600 hover:text-ja px-3 py-2">Live Results</a>
+                    <a href="{% url 'login' %}" style="cursor: pointer !important; background-color: #285F74;" class="cursor-pointer bg-ja text-white px-4 py-2 rounded-lg hover:bg-ja-dark transition">
                         Admin Login
                     </a>
                 </div>
@@ -52,11 +52,11 @@
                     Empowering young people to own their economic success through entrepreneurship and innovation competitions.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{% url 'judge_login' %}" class="bg-white text-ja px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-flex items-center justify-center">
+                    <a href="{% url 'judge_login' %}" style="cursor: pointer !important;" class="cursor-pointer bg-white text-ja px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-flex items-center justify-center">
                         <i data-lucide="clipboard-check" class="w-5 h-5 inline mr-2"></i>
                         Judge Login
                     </a>
-                    <a href="{% url 'results' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-ja transition inline-flex items-center justify-center">
+                    <a href="{% url 'results' %}" style="cursor: pointer !important;" class="cursor-pointer border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-ja transition inline-flex items-center justify-center">
                         <i data-lucide="trophy" class="w-5 h-5 inline mr-2"></i>
                         View Results
                     </a>

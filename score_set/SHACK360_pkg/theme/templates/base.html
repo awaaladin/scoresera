@@ -42,6 +42,14 @@
     <!-- Custom Styles -->
     <style>
         [x-cloak] { display: none !important; }
+        
+        /* Force cursor pointer on all interactive elements */
+        a { cursor: pointer !important; pointer-events: auto !important; }
+        button { cursor: pointer !important; pointer-events: auto !important; }
+        [role="button"] { cursor: pointer !important; pointer-events: auto !important; }
+        .cursor-pointer { cursor: pointer !important; pointer-events: auto !important; }
+        input[type="submit"], input[type="button"] { cursor: pointer !important; }
+        
         .sidebar-link.active {
             background-color: #285F74;
             color: white;
@@ -56,6 +64,12 @@
         .hover\:text-ja:hover { color: #285F74; }
         .focus\:ring-ja:focus { --tw-ring-color: #285F74; }
         .focus\:border-ja:focus { border-color: #285F74; }
+        
+        /* Ensure nothing blocks clicks */
+        nav a, section a, footer a, .btn, button {
+            position: relative;
+            z-index: 10;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -63,37 +77,28 @@
 <body class="bg-gray-50 min-h-screen">
     {% block content %}{% endblock %}
     
-    <!-- Alpine.js for interactivity -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Define scripts first -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Alpine.js for interactivity - must load AFTER function definitions -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <script>
-        // Initialize Lucide icons after Alpine.js renders
+        // Initialize Lucide icons after page loads
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         });
         
-        // Re-initialize icons when Alpine updates the DOM
+        // Re-initialize icons when Alpine is ready
         document.addEventListener('alpine:initialized', function() {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-        });
-        
-        // Watch for Alpine DOM changes and reinitialize icons
-        if (typeof MutationObserver !== 'undefined') {
-            const observer = new MutationObserver(function(mutations) {
+            setTimeout(function() {
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons();
                 }
-            });
-            document.addEventListener('DOMContentLoaded', function() {
-                observer.observe(document.body, { childList: true, subtree: true });
-            });
-        }
+            }, 100);
+        });
     </script>
-    
-    {% block extra_js %}{% endblock %}
 </body>
 </html>
