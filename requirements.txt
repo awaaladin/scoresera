@@ -1,0 +1,11 @@
+Django>=4.2
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+djangorestframework>=3.14
+django-cors-headers>=4.3
+django-environ>=0.11
+django-tailwind>=3.7
+cryptography>=41.0
+python-dateutil>=2.8
+dj-database-url>=2.1
+whitenoise>=6.6
