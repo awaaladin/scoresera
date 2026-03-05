@@ -616,8 +616,8 @@
                                                     <span :class="qm.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'" class="px-2 py-1 rounded-full text-xs" x-text="qm.is_active ? 'Active' : 'Inactive'"></span>
                                                 </td>
                                                 <td class="px-6 py-4">
-                                                    <button @click="deleteQuizMaster(qm.id)" class="text-red-600 hover:text-red-800">
-                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    <button @click="deleteQuizMaster(qm.id)" class="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-sm font-medium">
+                                                        Delete
                                                     </button>
                                                 </td>
                                             </tr>
@@ -664,8 +664,8 @@
                                                 <td class="px-6 py-4" x-text="(c.accuracy_rate || 0) + '%'"></td>
                                                 <td class="px-6 py-4 font-bold text-purple-600" x-text="c.total_points || 0"></td>
                                                 <td class="px-6 py-4">
-                                                    <button @click="deleteContestant(c.id)" class="text-red-600 hover:text-red-800">
-                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    <button @click="deleteContestant(c.id)" class="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-sm font-medium">
+                                                        Delete
                                                     </button>
                                                 </td>
                                             </tr>
