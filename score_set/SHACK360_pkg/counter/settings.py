@@ -37,7 +37,7 @@ _allowed = os.environ.get('ALLOWED_HOSTS', '')
 if _allowed:
     ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
 else:
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] if DEBUG else []
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.vercel.app', 'scoreset.vercel.app'] if DEBUG else ['.vercel.app', 'scoreset.vercel.app']
 
 # Add Vercel domain to CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
