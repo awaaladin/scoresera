@@ -19,6 +19,7 @@
   "env": {
     "PYTHONUNBUFFERED": "1",
     "DEBUG": "True",
-    "ALLOWED_HOSTS": ".vercel.app,scoreset.vercel.app"
+    "ALLOWED_HOSTS": ".vercel.app,scoreset.vercel.app",
+    "DATABASE_URL": "postgresql://postgres.yobovutojnghilewndmt:Awaaladinjeff7@aws-1-eu-west-1.pooler.supabase.com:6543/postgres"
   }
 }
