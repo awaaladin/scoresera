@@ -4,6 +4,7 @@ services:
     name: scoreset
     env: python
     plan: free
+    rootDirectory: score_set/SHACK360_pkg
     buildCommand: pip install -r requirements.txt && python manage.py migrate
     startCommand: gunicorn counter.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
