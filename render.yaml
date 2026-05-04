@@ -1,5 +1,5 @@
 services:
-  # Web Service with SQLite
+  # Web Service with SQLite - FIXED VERSION
   - type: web
     name: scoreset
     env: python
