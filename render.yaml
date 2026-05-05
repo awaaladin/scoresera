@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: score-set
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m gunicorn wsgi:application --bind 0.0.0.0:$PORT
+    rootDir: score_set/SHACK360_pkg/counter
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
