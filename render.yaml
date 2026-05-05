@@ -4,8 +4,9 @@ services:
     name: scoreset
     env: python
     plan: free
-    buildCommand: cd score_set/SHACK360_pkg && pip install -r requirements.txt && python manage.py migrate
-    startCommand: cd score_set/SHACK360_pkg && gunicorn counter.wsgi:application --bind 0.0.0.0:$PORT
+    rootDirectory: score_set/SHACK360_pkg
+    buildCommand: pip install -r requirements.txt && python manage.py migrate
+    startCommand: gunicorn counter.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
