@@ -1,7 +1,6 @@
-from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
 
-class SecurityHeadersMiddleware(MiddlewareMixin):
+class SecurityHeadersMiddleware:
     """Add security-related HTTP headers to all responses.
 
     Headers set:
