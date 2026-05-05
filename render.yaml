@@ -1,0 +1,17 @@
+services:
+  # Web Service with SQLite - FIXED VERSION
+  - type: web
+    name: scoreset
+    env: python
+    plan: free
+    buildCommand: cd score_set/SHACK360_pkg && pip install -r requirements.txt && python manage.py migrate
+    startCommand: cd score_set/SHACK360_pkg && gunicorn counter.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        value: django-insecure-@k8y9#*2m#f^p5wz0q8h3l!r3@_5x^g4c7q$z%j2
+      - key: ALLOWED_HOSTS
+        value: .onrender.com,scoreset.onrender.com
