@@ -62,7 +62,11 @@
                 </button>
             </form>
             
-            <div class="mt-4 pt-4 border-t border-gray-200 text-center">
+            <div class="mt-4 pt-4 border-t border-gray-200 text-center space-y-2">
+                <a href="{% url 'signup' %}" class="text-gray-600 hover:text-ja inline-flex items-center">
+                    <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>
+                    Create an account
+                </a>
                 <a href="{% url 'judge_login' %}" class="text-gray-600 hover:text-ja inline-flex items-center">
                     <i data-lucide="clipboard-check" class="w-4 h-4 mr-2"></i>
                     Login as Judge instead

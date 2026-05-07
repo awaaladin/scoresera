@@ -3,7 +3,7 @@ URL configuration for the Scoring System frontend pages.
 """
 from django.urls import path
 from .views import (
-    index, login_view, logout_view,
+    index, login_view, logout_view, signup_view,
     judge_login_view, judge_dashboard_view,
     results_view, admin_dashboard_view,
     # Quiz System
@@ -19,6 +19,7 @@ urlpatterns = [
     
     # Auth pages
     path('login/', login_view, name='login'),
+    path('signup/', signup_view, name='signup'),
     path('logout/', logout_view, name='logout'),
     
     # Judge pages
