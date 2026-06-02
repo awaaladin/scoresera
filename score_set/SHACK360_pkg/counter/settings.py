@@ -63,7 +63,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     # Security headers middleware adds CSP, Referrer-Policy, Permissions-Policy
-    "counter.middleware.security_headers.SecurityHeadersMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
